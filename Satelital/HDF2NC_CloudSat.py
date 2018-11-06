@@ -7,7 +7,7 @@ Created on 2018-10-12
 
 Make nc form hdf files of CloudSat
 """
-from Gadgets import * # Funciones propias
+from Gadgets.Gadgets import * # Funciones propias
 import numpy as np
 
 path_fig  = '/home/cmcuervol/A-Train/CloudSat/'
