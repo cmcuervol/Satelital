@@ -280,6 +280,24 @@ def HDFread(filename, variable, Class=None):
 
     return np.array(V).ravel()
 
+def HDFread1D(filename, variable):
+    """
+    Read HDF file in vs in simple mode
+    """
+    # Read the file
+    f  = HDF(filename)
+    # Initialize v mode
+    vs = f.vstart()
+    # extrect data
+    var = vs.attach(variable)
+    Var = np.array(var[:]).ravel()
+    # Close the file
+    var.detach()
+    vs.end()
+    f.close()
+
+    return Var
+
 
 def GranuleTime(Filename):
     """
