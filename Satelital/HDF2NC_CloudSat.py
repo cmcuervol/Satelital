@@ -42,7 +42,7 @@ for year in years:
     days = [days[0]]
     for day in days:
         files = Listador(path_Data+year+'/'+day, final='.hdf')
-        files = files[0]
+        # files = files[0]
         for i in range(len(files)):
             Lat = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Latitude')
             Lon = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Longitude')
