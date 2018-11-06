@@ -6,7 +6,8 @@ from pyhdf.SD  import *
 
 # from numpy import *         # hay que importar todo para que funcione pyhdf
 import numpy as np
-import os, locale, sys
+import os, locale, sys, zipfile
+
 from netCDF4 import Dataset
 import datetime as dt
 
