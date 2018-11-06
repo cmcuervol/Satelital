@@ -25,6 +25,7 @@ import matplotlib.dates as mdates
 import matplotlib.font_manager as fm
 from mpl_toolkits.basemap import Basemap
 
+from Gadgets.Gadgets import * # Funciones propias
 
 locale.setlocale(locale.LC_ALL, ('en_us','utf-8'))
 
