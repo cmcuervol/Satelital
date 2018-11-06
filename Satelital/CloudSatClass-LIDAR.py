@@ -1,17 +1,5 @@
 #!/usr/bin/env python
 
-from pyhdf.SD import SD, SDC
-from pyhdf.HDF import *
-from pyhdf.VS import *
-
-
-# from pyhdf import SD
-from pyhdf.HDF import *
-from pyhdf.V   import *
-from pyhdf.VS  import *
-from pyhdf.SD  import *
-
-# from numpy import *         # hay que importar todo para que funcione pyhdf
 import numpy as np
 import os, locale, sys, zipfile
 # from netCDF4 import Dataset
@@ -27,6 +15,8 @@ import matplotlib.colors as colors
 import matplotlib.dates as mdates
 import matplotlib.font_manager as fm
 from mpl_toolkits.basemap import Basemap
+
+from Gadgets.Gadgets import * # Funciones propias
 
 #----------------------------------------------------------------------------------------#
 file_path = '/mnt/Sanduchera/ftp1.cloudsat.cira.colostate.edu/2B-CLDCLASS-LIDAR.P_R04/'
@@ -75,207 +65,23 @@ AvenirBook  = fm.FontProperties(fname=Path_fuentes+'AvenirLTStd-Book.otf')
 AvenirBlack = fm.FontProperties(fname=Path_fuentes+'AvenirLTStd-Black.otf')
 AvenirRoman = fm.FontProperties(fname=Path_fuentes+'AvenirLTStd-Roman.ttf')
 
-def Listador(directorio, inicio=None, final=None):
-    """
-    Return the elements (files and directories) of any directory,
-    optionaly with filter by start o end of the name of the element
-    IMPUTS
-    directorio : route of the directory
-    inicio     : start of the elements
-    final      : end of the elements
-    OUTPUTS
-    lf  : list of elements
-    """
-    lf = []
-    lista = os.listdir(directorio)
-    lista.sort()
-    if inicio == final == None:
-        return lista
-    else:
-        for i in lista:
-            if inicio == None:
-                if i.endswith(final):
-                    lf.append(i)
-            if final == None:
-                if i.startswith(inicio):
-                    lf.append(i)
-        return lf
-
-
-def HDFvars(File):
-    """
-    Extrae los nombres de las variables para un archivo (File)
-    """
-    # hdfFile = SD.SD(File, mode=1)
-    hdfFile = SD(File, mode=1)
-    dsets = hdfFile.datasets()
-    k = []
-    for key in dsets.keys():
-        # print key
-        k.append(key)
-    k.sort()
-    hdfFile.end()
-    return k
-
-
-
-def DesHDF(File, name_var, forma=''):
-    """
-    Extrae los datos de HDF para un archivo(file), y para una varaiable (name_var),
-    puede ser Ascendente ('_A') o descendente ('_D')
-    """
-    # hdfFile = SD.SD(File, mode=1)
-    hdfFile = SD(File, mode=1)
-    # print 'Reading ', File
-    d1 = hdfFile.select(name_var+forma)
-    var = d1.get()
-    print 'Extracting ', name_var
-    d1.endaccess()
-    hdfFile.end()
-
-    return var
-
-
-def HDFread(filename, variable, Class=None):
-    """
-    Extract the data for non scientific data in V mode of hdf file
-    """
-    hdf = HDF(filename, HC.READ)
-
-    # Initialize the SD, V and VS interfaces on the file.
-    sd = SD(filename)
-    vs = hdf.vstart()
-    v  = hdf.vgstart()
-
-    # Encontrar el puto id de las Geolocation Fields
-    if Class == None:
-        ref = v.findclass('SWATH Vgroup')
-    else:
-        ref = v.findclass(Class)
-
-    # Open all data of the class
-    vg = v.attach(ref)
-    # All fields in the class
-    members = vg.tagrefs()
-
-    nrecs = []
-    names = []
-    for tag, ref in members:
-        # Vdata tag
-        vd = vs.attach(ref)
-        # nrecs, intmode, fields, size, name = vd.inquire()
-        nrecs.append(vd.inquire()[0]) # number of records of the Vdata
-        names.append(vd.inquire()[-1])# name of the Vdata
-        vd.detach()
-
-    idx = names.index(variable)
-    var = vs.attach(members[idx][1])
-    V   = var.read(nrecs[idx])
-    var.detach()
-    # Terminate V, VS and SD interfaces.
-    v.end()
-    vs.end()
-    sd.end()
-    # Close HDF file.
-    hdf.close()
-
-    return np.array(V).ravel()
-
-def Salto(x, delta):
-    "Determina cuando hay un cambio en un array"
-    a = np.array(map(lambda i: x[i+1]-x[i], range(len(x)-1)))
-    try:
-        pos = np.where(a!=delta)[0][0]
-    except:
-        pos = 0
-    return pos
-
-def Unzipeador(path, ext='.zip', erase=True, path_extract=None):
-    """
-    Extract and remove the zip files of a directory
-    IMPUTS
-    path : directory with the zip files
-    ext  : files extention
-    erase: True to erase the zip files after extract
-    path_extract : directory to extract the zip files,
-                   if is None, the files are extract in the same directory (path)
-    """
-    files = Listador(path, final=ext)
-    for File in files:
-        zip_ref = zipfile.ZipFile(path+File)
-        if path_extract is None:
-            zip_ref.extractall(path)
-        else:
-            zip_ref.extractall(path_extract)
-        print File
-        zip_ref.close()
-        if erase == True:
-            os.remove(path+File)
-
-def GranuleTime(Filename):
-    """
-    Convert to datetime format the date of granule data for CloudSat
-    """
-    Year = int(Filename[ :  4])
-    JyDy = int(Filename[ 4: 7])
-    Hour = int(Filename[ 7: 9])
-    Min  = int(Filename[ 9:11])
-    Seg  = int(Filename[11:13])
-    GranuTime = dt.datetime(Year,1,1,Hour,Min,Seg)+dt.timedelta(days=JyDy-1)
-    return GranuTime
-
-
-
-
-
 
 #----------------------------------------------------------------------------------------#
 Unzipeador(file_path+year+'/'+day+'/', erase=False)
 fecha = GranuleTime(file_name)
 # Read HDF Files (VD data) Latitude & Longitude
 
-f = HDF(file_path+year+'/'+day+'/'+file_name, SDC.READ)
-vs = f.vstart()
-
-Latitude = vs.attach('Latitude')
-Longitude = vs.attach('Longitude')
-
-Lat = np.array(Latitude[:]).ravel()
-Lon = np.array(Longitude[:]).ravel()
-
-Latitude.detach()
-Longitude.detach()
-vs.end()
-f.close()
+Lat = HDFread1D(file_path+year+'/'+day+'/'+file_name, 'Latitude')
+Lon = HDFread1D(file_path+year+'/'+day+'/'+file_name, 'Longitude')
 
 #----------------------------------------------------------------------------------------#
 # SDS Data
 Vars = HDFvars(file_path+year+'/'+day+'/'+file_name)
 
-file = SD(file_path+year+'/'+day+'/'+file_name, SDC.READ)
-
-file_info = file.info()
-print(file_info)  # number of sds and metadata
-
-def DescribeHDFvar(filename, variable):
-    """
-    Describes the info and atributes of HDF variable
-    IMPUTS
-    filename : complete path and filename
-    variable : name of the variable to describe, type STR
-    """
-
-    file = SD(filename, SDC.READ)
-    print('---------- '+variable+ ' ----------')
-    sds_obj = file.select(variable)
-    Var = sds_obj.get()
-    sds_info = sds_obj.info()
-    print(Var.shape)
-    print( sds_info )
-    print( sds_info[0], sds_info[1] )
-    print( 'sds attributes' )
-    pprint.pprint( sds_obj.attributes() )
-    file.end()
+# file = SD(file_path+year+'/'+day+'/'+file_name, SDC.READ)
+#
+# file_info = file.info()
+# print(file_info)  # number of sds and metadata
 
 
 DescribeHDFvar(file_path+year+'/'+day+'/'+file_name,'CloudLayerBase')
@@ -290,8 +96,6 @@ CloudPhase     = DesHDF(file_path+year+'/'+day+'/'+file_name,'CloudPhase')
 cldclass_lidar_start_idx = 000
 # cldclass_lidar_end_idx = 1000
 cldclass_lidar_end_idx = CloudPhase.shape[0]
-
-tag = '2'
 
 #----------------------------------------------------------------------------------------#
 # Plot cldclass-lidar cloud layers + nb cloud phase
