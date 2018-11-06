@@ -10,6 +10,103 @@ import os, locale, sys
 from netCDF4 import Dataset
 import datetime as dt
 
+
+# =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+#                                Basic and system functions
+# =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+def Listador(directorio, inicio=None, final=None):
+    """
+    Return the elements (files and directories) of any directory,
+    optionaly with filter by start o end of the name of the element
+    IMPUTS
+    directorio : route of the directory
+    inicio     : start of the elements
+    final      : end of the elements
+    OUTPUTS
+    lf  : list of elements
+    """
+    lf = []
+    lista = os.listdir(directorio)
+    lista.sort()
+    if inicio == final == None:
+        return lista
+    else:
+        for i in lista:
+            if inicio == None:
+                if i.endswith(final):
+                    lf.append(i)
+            if final == None:
+                if i.startswith(inicio):
+                    lf.append(i)
+        return lf
+
+
+
+def Diff(f,x, order=1, tiempo=None):
+    """calculate the derived df/dx
+    IMPUTS
+    f: array to derivated respect to x
+    x: array
+    order: order of the derived
+    tiempo: optional. If x is a time array put anything, then cacule the derivated
+            in time, x must be a datetime object, and the derivate calcules the
+            difference in seconds
+    OUTPUTS
+    g: derived of f respect to x
+    """
+
+    # df_dx = np.zeros((len(f)-order, ), dtype= float)
+    g = f
+    for i in range(order):
+        dg_dx = np.zeros((len(f)-(i+1), ), dtype= float)
+        if tiempo==None:
+            for i in range(len(f)-(i+1)):
+                dg_dx[i]= (g[i+1]-g[i])/(x[i+1]-x[i])
+        else:
+            for i in range(len(f)-(i+1)):
+                dg_dx[i]= (g[i+1]-g[i])/(x[i+1]-x[i]).seconds
+
+        g = dg_dx
+
+    return g
+
+
+def Salto(x, delta):
+    "Determina cuando hay un cambio en un array"
+    a = np.array(map(lambda i: x[i+1]-x[i], range(len(x)-1)))
+    try:
+        pos = np.where(a!=delta)[0][0]
+    except:
+        pos = 0
+    return pos
+
+
+def Unzipeador(path, ext='.zip', erase=True, path_extract=None):
+    """
+    Extract and remove the zip files of a directory
+    IMPUTS
+    path : directory with the zip files
+    ext  : files extention
+    erase: True to erase the zip files after extract
+    path_extract : directory to extract the zip files,
+                   if is None, the files are extract in the same directory (path)
+    """
+    files = Listador(path, final=ext)
+    for File in files:
+        zip_ref = zipfile.ZipFile(path+File)
+        if path_extract is None:
+            zip_ref.extractall(path)
+        else:
+            zip_ref.extractall(path_extract)
+        print File
+        zip_ref.close()
+        if erase == True:
+            os.remove(path+File)
+
+# =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+#                                HDF files management
+# =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
 def describevg(refnum):
     # Describe the vgroup with the given refnum.
     # Open vgroup in read mode.
@@ -85,73 +182,6 @@ def describevg(refnum):
 #
 
 
-def Listador(directorio, inicio=None, final=None):
-    """
-    Return the elements (files and directories) of any directory,
-    optionaly with filter by start o end of the name of the element
-    IMPUTS
-    directorio : route of the directory
-    inicio     : start of the elements
-    final      : end of the elements
-    OUTPUTS
-    lf  : list of elements
-    """
-    lf = []
-    lista = os.listdir(directorio)
-    lista.sort()
-    if inicio == final == None:
-        return lista
-    else:
-        for i in lista:
-            if inicio == None:
-                if i.endswith(final):
-                    lf.append(i)
-            if final == None:
-                if i.startswith(inicio):
-                    lf.append(i)
-        return lf
-
-
-
-def Diff(f,x, order=1, tiempo=None):
-    """calculate the derived df/dx
-    IMPUTS
-    f: array to derivated respect to x
-    x: array
-    order: order of the derived
-    tiempo: optional. If x is a time array put anything, then cacule the derivated
-            in time, x must be a datetime object, and the derivate calcules the
-            difference in seconds
-    OUTPUTS
-    g: derived of f respect to x
-    """
-
-    # df_dx = np.zeros((len(f)-order, ), dtype= float)
-    g = f
-    for i in range(order):
-        dg_dx = np.zeros((len(f)-(i+1), ), dtype= float)
-        if tiempo==None:
-            for i in range(len(f)-(i+1)):
-                dg_dx[i]= (g[i+1]-g[i])/(x[i+1]-x[i])
-        else:
-            for i in range(len(f)-(i+1)):
-                dg_dx[i]= (g[i+1]-g[i])/(x[i+1]-x[i]).seconds
-
-        g = dg_dx
-
-    return g
-
-
-def Salto(x, delta):
-    "Determina cuando hay un cambio en un array"
-    a = np.array(map(lambda i: x[i+1]-x[i], range(len(x)-1)))
-    try:
-        pos = np.where(a!=delta)[0][0]
-    except:
-        pos = 0
-    return pos
-
-
 
 def HDFvars(File):
     """
@@ -167,7 +197,25 @@ def HDFvars(File):
     hdfFile.end() # close the file
     return k
 
+def DescribeHDFvar(filename, variable):
+    """
+    Describes the info and atributes of HDF variable
+    IMPUTS
+    filename : complete path and filename
+    variable : name of the variable to describe, type STR
+    """
 
+    file = SD(filename, SDC.READ)
+    print('---------- '+variable+ ' ----------')
+    sds_obj = file.select(variable)
+    Var = sds_obj.get()
+    sds_info = sds_obj.info()
+    print(Var.shape)
+    print( sds_info )
+    print( sds_info[0], sds_info[1] )
+    print( 'sds attributes' )
+    pprint.pprint( sds_obj.attributes() )
+    file.end()
 
 def DesHDF(File, name_var, forma='_A'):
     """
@@ -230,3 +278,16 @@ def HDFread(filename, variable, Class=None):
     hdf.close()
 
     return np.array(V).ravel()
+
+
+def GranuleTime(Filename):
+    """
+    Convert to datetime format the date of granule data for CloudSat
+    """
+    Year = int(Filename[ :  4])
+    JyDy = int(Filename[ 4: 7])
+    Hour = int(Filename[ 7: 9])
+    Min  = int(Filename[ 9:11])
+    Seg  = int(Filename[11:13])
+    GranuTime = dt.datetime(Year,1,1,Hour,Min,Seg)+dt.timedelta(days=JyDy-1)
+    return GranuTime
