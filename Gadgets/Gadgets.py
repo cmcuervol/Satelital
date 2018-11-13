@@ -326,7 +326,7 @@ def GranuleTime(Filename):
 
 def cmapeador(colrs=None, levels=None, name='coqueto'):
     """
-    Make a new color map with the colors and levels given, adapted from Julián Sepulveda & Carlos Hoyos
+    Make a new color map with the colors and levels given, adapted from Julian Sepulveda & Carlos Hoyos
 
     IMPUTS
     colrs  : list of tuples of RGB colors combinations
