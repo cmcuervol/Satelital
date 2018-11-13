@@ -360,9 +360,15 @@ def cmapeador(colrs=None, levels=None, name='coqueto'):
     return cmap_new, norm_new
 
 
-def newjet():
-    """función para crear un nuevo color bar con cero en la mitad, modeificando el color bar jet"""
-    jetcmap = plt.cm.get_cmap("jet", 11) #generate a jet map with 11 values
+def newjet(cmap="jet"):
+    """
+    function to make a newd colorbar with white at center
+    IMPUTS
+    cmap: colormap to change
+    RETURNS
+    newcmap : colormap with white as center
+    """
+    jetcmap = plt.cm.get_cmap(cmap, 11) #generate a jet map with 11 values
     jet_vals = jetcmap(np.arange(11)) #extract those values as an array
     jet_vals[5] = [1, 1, 1, 1] #change the middle value
     newcmap = colors.LinearSegmentedColormap.from_list("newjet", jet_vals)
