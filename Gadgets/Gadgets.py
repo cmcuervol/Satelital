@@ -229,7 +229,7 @@ def DescribeHDFvar(filename, variable):
     pprint.pprint( sds_obj.attributes() )
     file.end()
 
-def DesHDF(File, name_var, forma='_A'):
+def DesHDF(File, name_var, forma=''):
     """
     Extrae los datos de HDF para un archivo(file), y para una varaiable (name_var),
     puede ser Ascendente ('_A') o descendente ('_D')
