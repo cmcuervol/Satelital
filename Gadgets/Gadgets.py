@@ -47,6 +47,9 @@ def Listador(directorio, inicio=None, final=None):
             if final == None:
                 if i.startswith(inicio):
                     lf.append(i)
+            if (inicio is not None) & (final is not None):
+                if i.startswith(inicio) & i.endswith(final):
+                    lf.append(i)
         return lf
 
 
