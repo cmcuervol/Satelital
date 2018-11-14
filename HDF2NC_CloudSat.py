@@ -90,7 +90,8 @@ hgt = []
 year = '2008'
 
 mxn = 8000 # Number of maximun values for standarized variable
-days  = ['001']
+# days  = ['001']
+days = Listador(path_Data+year)
 for day in days:
     try:
         files_Data = Listador(path_Data+year+'/'+day, final='hdf' )
@@ -147,6 +148,7 @@ for day in days:
     # files = [files[1]]
     for i in range(len(files)): # Always exist
         tim.append(GranuleTime(files[i]))
+        print(tim.strftime('%Y-%m-%d %H:%M:%S'))
         # Georreference
         Lat = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Latitude')
         Lon = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Longitude')
