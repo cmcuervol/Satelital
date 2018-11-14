@@ -173,8 +173,8 @@ for day in days:
             hgt.append(VarSplitFilled(HGT,Lat, Lon, Tropical,(mxn,HGT.shape[1]), HGT.dtype, NoValue=-9999))
         except:
             ref.append(np.ones((mxn,125), REF.dtype)*-8888)
-            msk.append(np.ones((mxn,125), MSK.dtype)*-9))
-            hgt.append(np.ones((mxn,125), HGT.dtype)*-9999))
+            msk.append(np.ones((mxn,125), MSK.dtype)*-9)
+            hgt.append(np.ones((mxn,125), HGT.dtype)*-9999)
     
         # ======================================================================
 
