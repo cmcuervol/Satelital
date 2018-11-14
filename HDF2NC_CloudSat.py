@@ -208,7 +208,7 @@ date    = [cdftime.date2num(i) for i in tim]
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 
 path_nc = '/home/cmcuervol/A-Train/CloudSat/'
-Name_nc = 'Prueba'
+Name_nc = 'Prueba2008'
 # Variables de los datos originales
 ngeo    = mxn
 ntime   = lat.shape[0]
