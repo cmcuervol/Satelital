@@ -148,7 +148,7 @@ for day in days:
     # files = [files[1]]
     for i in range(len(files)): # Always exist
         tim.append(GranuleTime(files[i]))
-        print(tim.strftime('%Y-%m-%d %H:%M:%S'))
+        print(tim[i].strftime('%Y-%m-%d %H:%M:%S'))
         # Georreference
         Lat = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Latitude')
         Lon = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Longitude')
