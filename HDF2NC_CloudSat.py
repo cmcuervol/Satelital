@@ -148,6 +148,7 @@ for day in days:
     # files = [files[1]]
     for i in range(len(files)): # Always exist
         tim.append(GranuleTime(files[i]))
+        print( '******************************************')
         print(tim[i].strftime('%Y-%m-%d %H:%M:%S'))
         # Georreference
         Lat = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Latitude')
@@ -161,14 +162,20 @@ for day in days:
         rep.append(VarSplitFilled(REP,Lat, Lon, Tropical, (mxn,REP.shape[1]), REP.dtype, NoValue=-9999))
         # ======================================================================
         # GEOPROF variables
-        f_Geop = Listador(path_Geop+year+'/'+day, inicio=files[i][:13], final='.hdf')[0]
+        try:
+            f_Geop = Listador(path_Geop+year+'/'+day, inicio=files[i][:13], final='.hdf')[0]
 
-        REF = DesHDF(path_Geop+year+'/'+day+'/'+f_Geop, 'Radar_Reflectivity')
-        MSK = DesHDF(path_Geop+year+'/'+day+'/'+f_Geop, 'CPR_Cloud_mask')
-        HGT = DesHDF(path_Geop+year+'/'+day+'/'+f_Geop, 'Height')
-        ref.append(VarSplitFilled(REF,Lat, Lon, Tropical,(mxn,REF.shape[1]), REF.dtype, NoValue=-8888))
-        msk.append(VarSplitFilled(MSK,Lat, Lon, Tropical,(mxn,MSK.shape[1]), MSK.dtype, NoValue=-9))
-        hgt.append(VarSplitFilled(HGT,Lat, Lon, Tropical,(mxn,HGT.shape[1]), HGT.dtype, NoValue=-9999))
+            REF = DesHDF(path_Geop+year+'/'+day+'/'+f_Geop, 'Radar_Reflectivity')
+            MSK = DesHDF(path_Geop+year+'/'+day+'/'+f_Geop, 'CPR_Cloud_mask')
+            HGT = DesHDF(path_Geop+year+'/'+day+'/'+f_Geop, 'Height')
+            ref.append(VarSplitFilled(REF,Lat, Lon, Tropical,(mxn,REF.shape[1]), REF.dtype, NoValue=-8888))
+            msk.append(VarSplitFilled(MSK,Lat, Lon, Tropical,(mxn,MSK.shape[1]), MSK.dtype, NoValue=-9))
+            hgt.append(VarSplitFilled(HGT,Lat, Lon, Tropical,(mxn,HGT.shape[1]), HGT.dtype, NoValue=-9999))
+        except:
+            ref.append(np.ones((mxn,125), REF.dtype)*-8888)
+            msk.append(np.ones((mxn,125), MSK.dtype)*-9))
+            hgt.append(np.ones((mxn,125), HGT.dtype)*-9999))
+    
         # ======================================================================
 
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
@@ -291,9 +298,9 @@ nw.description = "This ncfile contents the CloudSat data , from "\
 # nw.metadatos = 'https://disc.gsfc.nasa.gov/information/documents?title=AIRS%20Documentation'
 
 # Agregar los datos al archivo
-print '******************************************'
-print '    writing variables in netCDF file '
-print '******************************************'
+print( '******************************************')
+print( '    writing variables in netCDF file '     )
+print( '******************************************')
 ncvar_time[:] = date
 ncvar_lat [:,:] = lat
 ncvar_lon [:,:] = lon
