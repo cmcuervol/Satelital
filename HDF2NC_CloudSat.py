@@ -99,8 +99,9 @@ for m in range(1,13):
 
     ref = []; msk = []; hgt = []
 
-    mrf =[]; clw = []; piw = []; plw = []
+    mrf = []; clw = []; piw = []; plw = []
 
+    csc = []
 
     # days  = ['001']
 
@@ -138,7 +139,18 @@ for m in range(1,13):
                 msk.append(np.ones((mxn,125), 'int8' )*-9   )
                 hgt.append(np.ones((mxn,125), 'int16')*-9999)
             # ======================================================================
-            # Rain profile
+            # cloud clasification variables
+            try:
+                f_Ccls = Listador(path_Ccls+year+'/'+day, inicio=files[i][:13], final='.hdf')[0]
+
+                CSC = DesHDF(path_Ccls+year+'/'+day+'/'+f_Ccls, 'cloud_scenario')
+                # Change dtypes for generic
+                csc.append(VarSplitFilled(CSC,Lat, Lon, Tropical,(mxn,CSC.shape[1]), CSC.dtype, NoValue=-9999))
+            except:
+                csc.append(np.ones((mxn,125), 'int16')*-9999)
+
+            # ======================================================================
+            # Rain profile variables
             try:
                 f_rain = Listador(path_Rain+year+'/'+day, inicio=files[i][:13], final='.hdf')[0]
 
@@ -181,14 +193,20 @@ for m in range(1,13):
     # hgt = list2array(hgt)
     lat = np.array(lat)
     lon = np.array(lon)
+
     rep = list2array(rep)
+
     ref = list2array(ref)
     msk = list2array(msk)
     hgt = list2array(hgt)
+
     mrf = list2array(mrf)
     clw = list2array(clw)
     piw = list2array(piw)
     plw = list2array(plw)
+
+    csc = list2array(csc)
+
 
     cdftime = utime('hours since 1800-01-01 00:00:0.0')
     date    = [cdftime.date2num(i) for i in tim]
@@ -225,10 +243,13 @@ for m in range(1,13):
     ncvar_REF = nw.createVariable('Radar_Reflectivity', 'int16',('ntime','nheight','ngeo'))
     ncvar_MSK = nw.createVariable('CPR_Cloud_mask',     'int8', ('ntime','nheight','ngeo'))
     ncvar_HGT = nw.createVariable('Height',             'int16',('ntime','nheight','ngeo'))
+
     ncvar_MRF = nw.createVariable('modeled_reflectivity','int16',('ntime','nheight','ngeo'))
     ncvar_CLW = nw.createVariable('cloud_liquid_water','int16',('ntime','nheight','ngeo'))
     ncvar_PIW = nw.createVariable('precip_ice_water','int16',('ntime','nheight','ngeo'))
     ncvar_PLW = nw.createVariable('precip_liquid_water','int16',('ntime','nheight','ngeo'))
+
+    ncvar_CSC = nw.createVariable('cloud_scenario','int16',('ntime','nheight','ngeo'))
 
     print 'netCDF variables created'
 
@@ -260,6 +281,7 @@ for m in range(1,13):
     ncvar_CLW. longname = 'Cloud liquid water'
     ncvar_PIW. longname = 'Precipitable ice water'
     ncvar_PLW. longname = 'Precipitable liquid water'
+    ncvar_CSC. longname = 'Cloud scenario'
 
 
     nw.title = 'CloudSat of '+ year +'-'+ str(m)
@@ -301,14 +323,19 @@ for m in range(1,13):
     ncvar_time[:] = date
     ncvar_lat [:,:] = lat
     ncvar_lon [:,:] = lon
+
     ncvar_REP [:,:,:] = rep
+
     ncvar_REF [:,:,:] = ref
     ncvar_MSK [:,:,:] = msk
     ncvar_HGT [:,:,:] = hgt
+
     ncvar_MRF [:,:,:] = mrf
     ncvar_CLW [:,:,:] = clw
     ncvar_PIW [:,:,:] = piw
     ncvar_PLW [:,:,:] = plw
+
+    ncvar_CSC [:,:,:] = csc
 
     # Si no cierra el archivo es como dejar la BD abierta... se lo tira!
     nw.close()
