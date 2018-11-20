@@ -103,7 +103,8 @@ for m in range(1,13):
 
     csc = []
 
-    # days  = ['001']
+    cfr = []; clb = []; clt = []; cph = []; ppf = []; wlt = []
+    
 
     for day in days:
         files = Listador(path_Data+year+'/'+day, final='.hdf')
@@ -242,6 +243,8 @@ for m in range(1,13):
     cph = list2array(cph)
     ppf = list2array(ppf)
     wlt = list2array(wlt)
+
+
 
 
 
