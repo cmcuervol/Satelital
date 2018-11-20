@@ -94,17 +94,11 @@ for m in range(1,13):
     days.sort()
     # making empty list to decrease RAM use
     tim = []; lat = [];lon = []
-
     rep = []
-
     ref = []; msk = []; hgt = []
-
     mrf = []; clw = []; piw = []; plw = []
-
     csc = []
-
     cfr = []; clb = []; clt = []; cph = []; ppf = []; wlt = []
-    
 
     for day in days:
         files = Listador(path_Data+year+'/'+day, final='.hdf')
@@ -215,12 +209,6 @@ for m in range(1,13):
 
         return var
 
-    # lat = list2array(lat)
-    # lon = list2array(lon)
-    # rep = list2array(rep)
-    # ref = list2array(ref)
-    # msk = list2array(msk)
-    # hgt = list2array(hgt)
     lat = np.array(lat)
     lon = np.array(lon)
 
@@ -243,9 +231,6 @@ for m in range(1,13):
     cph = list2array(cph)
     ppf = list2array(ppf)
     wlt = list2array(wlt)
-
-
-
 
 
 
@@ -278,28 +263,28 @@ for m in range(1,13):
 
 
     # Crear variables
-    ncvar_lat  = nw.createVariable('lat', 'float64',('ntime','ngeo'))
-    ncvar_lon  = nw.createVariable('lon', 'float64',('ntime','ngeo'))
-    ncvar_time = nw.createVariable('time','float64',('ntime',))
+    ncvar_lat  = nw.createVariable('lat', 'float64',('ntime','ngeo'), zlib=True, complevel=9)
+    ncvar_lon  = nw.createVariable('lon', 'float64',('ntime','ngeo'), zlib=True, complevel=9)
+    ncvar_time = nw.createVariable('time','float64',('ntime',),       zlib=True, complevel=9)
 
-    ncvar_REP = nw.createVariable('ReceivedEchoPowers', 'int16',('ntime','nheight','ngeo'))
-    ncvar_REF = nw.createVariable('Radar_Reflectivity', 'int16',('ntime','nheight','ngeo'))
-    ncvar_MSK = nw.createVariable('CPR_Cloud_mask',     'int8', ('ntime','nheight','ngeo'))
-    ncvar_HGT = nw.createVariable('Height',             'int16',('ntime','nheight','ngeo'))
+    ncvar_REP = nw.createVariable('ReceivedEchoPowers', 'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_REF = nw.createVariable('Radar_Reflectivity', 'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_MSK = nw.createVariable('CPR_Cloud_mask',     'int8', ('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_HGT = nw.createVariable('Height',             'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
 
-    ncvar_MRF = nw.createVariable('modeled_reflectivity','int16',('ntime','nheight','ngeo'))
-    ncvar_CLW = nw.createVariable('cloud_liquid_water',  'int16',('ntime','nheight','ngeo'))
-    ncvar_PIW = nw.createVariable('precip_ice_water',    'int16',('ntime','nheight','ngeo'))
-    ncvar_PLW = nw.createVariable('precip_liquid_water', 'int16',('ntime','nheight','ngeo'))
+    ncvar_MRF = nw.createVariable('modeled_reflectivity','int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_CLW = nw.createVariable('cloud_liquid_water',  'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_PIW = nw.createVariable('precip_ice_water',    'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_PLW = nw.createVariable('precip_liquid_water', 'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
 
-    ncvar_CSC = nw.createVariable('cloud_scenario',      'int16',('ntime','nheight','ngeo'))
+    ncvar_CSC = nw.createVariable('cloud_scenario',      'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
 
-    ncvar_CFR = nw.createVariable('CloudFraction',    'float32',('ntime','nclass','ngeo'))
-    ncvar_CLB = nw.createVariable('CloudLayerBase',   'float32',('ntime','nclass','ngeo'))
-    ncvar_CLT = nw.createVariable('CloudLayerTop',    'float32',('ntime','nclass','ngeo'))
-    ncvar_CPH = nw.createVariable('CloudPhase',       'int8',('ntime','nclass','ngeo'))
-    ncvar_PPF = nw.createVariable('PrecipitationFlag','int8',('ntime','nclass','ngeo'))
-    ncvar_WLT = nw.createVariable('Water_layer_top',  'float32',('ntime','nclass','ngeo'))
+    ncvar_CFR = nw.createVariable('CloudFraction',    'float32',('ntime','nclass','ngeo'),zlib=True, complevel=9)
+    ncvar_CLB = nw.createVariable('CloudLayerBase',   'float32',('ntime','nclass','ngeo'),zlib=True, complevel=9)
+    ncvar_CLT = nw.createVariable('CloudLayerTop',    'float32',('ntime','nclass','ngeo'),zlib=True, complevel=9)
+    ncvar_CPH = nw.createVariable('CloudPhase',       'int8',   ('ntime','nclass','ngeo'),zlib=True, complevel=9)
+    ncvar_PPF = nw.createVariable('PrecipitationFlag','int8',   ('ntime','nclass','ngeo'),zlib=True, complevel=9)
+    ncvar_WLT = nw.createVariable('Water_layer_top',  'float32',('ntime','nclass','ngeo'),zlib=True, complevel=9)
 
 
     print 'netCDF variables created'
