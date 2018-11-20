@@ -168,6 +168,35 @@ for m in range(1,13):
                 clw.append(np.ones((mxn,125), 'int16')*-9999)
                 piw.append(np.ones((mxn,125), 'int16')*-9999)
                 plw.append(np.ones((mxn,125), 'int16')*-9999)
+            # ======================================================================
+            # LIDAR clasification variables
+            try:
+                f_LIDR = Listador(path_LIDR+year+'/'+day, inicio=files[i][:13], final='.hdf')[0]
+
+                CFR = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'CloudFraction')
+                CLB = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'CloudLayerBase')
+                CLT = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'CloudLayerTop')
+                # CLt = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'CloudLayerType')
+                CPH = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'CloudPhase')
+                # LBF = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'LayerBaseFlag')
+                # LBT = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'LayerTopFlag')
+                # PHL = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'Phase_log')
+                PPF = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'PrecipitationFlag')
+                WLT = DesHDF(path_LIDR+year+'/'+day+'/'+f_LIDR, 'Water_layer_top')
+                # Change dtypes for generic
+                cfr.append(VarSplitFilled(CFR,Lat, Lon, Tropical,(mxn,CFR.shape[1]), CFR.dtype, NoValue=-99.))
+                clb.append(VarSplitFilled(CLB,Lat, Lon, Tropical,(mxn,CLB.shape[1]), CLB.dtype, NoValue=-99.))
+                clt.append(VarSplitFilled(CLT,Lat, Lon, Tropical,(mxn,CLT.shape[1]), CLT.dtype, NoValue=-99.))
+                cph.append(VarSplitFilled(CPH,Lat, Lon, Tropical,(mxn,CPH.shape[1]), CPH.dtype, NoValue=0))
+                ppf.append(VarSplitFilled(CPH,Lat, Lon, Tropical,(mxn,CPH.shape[1]), CPH.dtype, NoValue=0))
+                wlt.append(VarSplitFilled(WLT,Lat, Lon, Tropical,(mxn,WLT.shape[1]), WLT.dtype, NoValue=-9.))
+            except:
+                cfr.append(np.ones((mxn,10), 'float32')*-99.)
+                clb.append(np.ones((mxn,10), 'float32')*-99.)
+                clt.append(np.ones((mxn,10), 'float32')*-99.)
+                cph.append(np.ones((mxn,10), 'int8')*-99.)
+                ppf.append(np.ones((mxn,10), 'int8')*-99.)
+                wlt.append(np.ones((mxn,10), 'float32')*-9.)
 
             # ======================================================================
 
@@ -207,6 +236,15 @@ for m in range(1,13):
 
     csc = list2array(csc)
 
+    cfr = list2array(cfr)
+    clb = list2array(clb)
+    clt = list2array(clt)
+    cph = list2array(cph)
+    ppf = list2array(ppf)
+    wlt = list2array(wlt)
+
+
+
 
     cdftime = utime('hours since 1800-01-01 00:00:0.0')
     date    = [cdftime.date2num(i) for i in tim]
@@ -223,6 +261,7 @@ for m in range(1,13):
     ngeo    = mxn
     ntime   = lat.shape[0]
     nheight = 125
+    nclass  = 10
 
 
     # Crear el nuevo archivo nc
@@ -231,7 +270,8 @@ for m in range(1,13):
     # Definir dimensiones
     ncdim_geo    = nw.createDimension('ngeo',    ngeo)
     ncdim_time   = nw.createDimension('ntime',   ntime)
-    ncdim_height = nw.createDimension('nheight',nheight)
+    ncdim_height = nw.createDimension('nheight', nheight)
+    ncdim_class  = nw.createDimension('nclass',  nclass)
 
 
     # Crear variables
@@ -245,11 +285,19 @@ for m in range(1,13):
     ncvar_HGT = nw.createVariable('Height',             'int16',('ntime','nheight','ngeo'))
 
     ncvar_MRF = nw.createVariable('modeled_reflectivity','int16',('ntime','nheight','ngeo'))
-    ncvar_CLW = nw.createVariable('cloud_liquid_water','int16',('ntime','nheight','ngeo'))
-    ncvar_PIW = nw.createVariable('precip_ice_water','int16',('ntime','nheight','ngeo'))
-    ncvar_PLW = nw.createVariable('precip_liquid_water','int16',('ntime','nheight','ngeo'))
+    ncvar_CLW = nw.createVariable('cloud_liquid_water',  'int16',('ntime','nheight','ngeo'))
+    ncvar_PIW = nw.createVariable('precip_ice_water',    'int16',('ntime','nheight','ngeo'))
+    ncvar_PLW = nw.createVariable('precip_liquid_water', 'int16',('ntime','nheight','ngeo'))
 
-    ncvar_CSC = nw.createVariable('cloud_scenario','int16',('ntime','nheight','ngeo'))
+    ncvar_CSC = nw.createVariable('cloud_scenario',      'int16',('ntime','nheight','ngeo'))
+
+    ncvar_CFR = nw.createVariable('CloudFraction',    'float32',('ntime','nclass','ngeo'))
+    ncvar_CLB = nw.createVariable('CloudLayerBase',   'float32',('ntime','nclass','ngeo'))
+    ncvar_CLT = nw.createVariable('CloudLayerTop',    'float32',('ntime','nclass','ngeo'))
+    ncvar_CPH = nw.createVariable('CloudPhase',       'int8',('ntime','nclass','ngeo'))
+    ncvar_PPF = nw.createVariable('PrecipitationFlag','int8',('ntime','nclass','ngeo'))
+    ncvar_WLT = nw.createVariable('Water_layer_top',  'float32',('ntime','nclass','ngeo'))
+
 
     print 'netCDF variables created'
 
@@ -268,6 +316,12 @@ for m in range(1,13):
     ncvar_CLW.units = 'mm'
     ncvar_PIW.units = 'mm'
     ncvar_PLW.units = 'mm'
+    ncvar_CFR.units = 'unitless'
+    ncvar_CLB.units = 'km'
+    ncvar_CLT.units = 'km'
+    ncvar_CPH.units = 'unitless'
+    ncvar_PPF.units = 'unitless'
+    ncvar_WLT.units = 'km'
 
     # Agregar nombres largos, a prueba de bobos
     ncvar_lat .longname = 'Array of latitude values'
@@ -282,9 +336,15 @@ for m in range(1,13):
     ncvar_PIW. longname = 'Precipitable ice water'
     ncvar_PLW. longname = 'Precipitable liquid water'
     ncvar_CSC. longname = 'Cloud scenario'
+    ncvar_CFR. longname = 'Cloud fraction'
+    ncvar_CLB. longname = 'Cloud layer base'
+    ncvar_CLT. longname = 'Cloud layer top'
+    ncvar_CPH. longname = 'Cloud phase'
+    ncvar_PPF. longname = 'Precipitation flag'
+    ncvar_WLT. longname = 'Water layer top'
 
 
-    nw.title = 'CloudSat of '+ year +'-'+ str(m)
+    nw.title = 'CloudSat of '+year+"-{:02}".format(m)
     nw.description = "This ncfile contents the CloudSat data , from "\
                     +str(Tropical['latmin']) + ' to '+str(Tropical['latmax']) + \
                     'degrees north, and from '+str(Tropical['lonmin'])+' to '+str(Tropical['lonmax']) + \
@@ -336,6 +396,14 @@ for m in range(1,13):
     ncvar_PLW [:,:,:] = plw
 
     ncvar_CSC [:,:,:] = csc
+
+    ncvar_CFR [:,:,:] = cfr
+    ncvar_CLB [:,:,:] = clb
+    ncvar_CLT [:,:,:] = clt
+    ncvar_CPH [:,:,:] = cph
+    ncvar_PPF [:,:,:] = ppf
+    ncvar_WLT [:,:,:] = wlt
+
 
     # Si no cierra el archivo es como dejar la BD abierta... se lo tira!
     nw.close()
