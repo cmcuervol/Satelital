@@ -99,6 +99,8 @@ for m in range(1,13):
     mrf = []; clw = []; piw = []; plw = []
     csc = []
     cfr = []; clb = []; clt = []; cph = []; ppf = []; wlt = []
+    lwc_r = []; lnc_r = []; ler_r = []; iwc_r = []; inc_r = []; ier_r = []
+    lwc_o = []; lnc_o = []; ler_o = []; iwc_o = []; inc_o = []; ier_o = []
 
     for day in days:
         files = Listador(path_Data+year+'/'+day, final='.hdf')
@@ -192,6 +194,64 @@ for m in range(1,13):
                 cph.append(np.ones((mxn,10), 'int8')*-99.)
                 ppf.append(np.ones((mxn,10), 'int8')*-99.)
                 wlt.append(np.ones((mxn,10), 'float32')*-9.)
+            # ======================================================================
+            # cloud water content radar only
+            try:
+                f_CWCr = Listador(path_CWCr+year+'/'+day, inicio=files[i][:13], final='.hdf')[0]
+
+                LWC_r = DesHDF(path_CWCr+year+'/'+day+'/'+f_CWCr, 'RO_liq_water_content')
+                LNC_r = DesHDF(path_CWCr+year+'/'+day+'/'+f_CWCr, 'RO_liq_number_conc')
+                LER_r = DesHDF(path_CWCr+year+'/'+day+'/'+f_CWCr, 'RO_liq_effective_radius')
+
+                IWC_r = DesHDF(path_CWCr+year+'/'+day+'/'+f_CWCr, 'RO_ice_water_content')
+                INC_r = DesHDF(path_CWCr+year+'/'+day+'/'+f_CWCr, 'RO_ice_number_conc')
+                IER_r = DesHDF(path_CWCr+year+'/'+day+'/'+f_CWCr, 'RO_ice_effective_radius')
+
+                # Change dtypes for generic
+                lwc_r.append(VarSplitFilled(LWC_r,Lat, Lon, Tropical,(mxn,LWC_r.shape[1]), LWC_r.dtype, NoValue=-4444))
+                lnc_r.append(VarSplitFilled(LNC_r,Lat, Lon, Tropical,(mxn,LNC_r.shape[1]), LNC_r.dtype, NoValue=-4444))
+                ler_r.append(VarSplitFilled(LER_r,Lat, Lon, Tropical,(mxn,LER_r.shape[1]), LER_r.dtype, NoValue=-4444))
+
+                iwc_r.append(VarSplitFilled(IWC_r,Lat, Lon, Tropical,(mxn,IWC_r.shape[1]), IWC_r.dtype, NoValue=-4444))
+                inc_r.append(VarSplitFilled(INC_r,Lat, Lon, Tropical,(mxn,INC_r.shape[1]), INC_r.dtype, NoValue=-4444))
+                ier_r.append(VarSplitFilled(IER_r,Lat, Lon, Tropical,(mxn,IER_r.shape[1]), IER_r.dtype, NoValue=-4444))
+            except:
+                lwc_r.append(np.ones((mxn,125), 'int16')*-4444)
+                lnc_r.append(np.ones((mxn,125), 'int16')*-4444)
+                ler_r.append(np.ones((mxn,125), 'int16')*-4444)
+
+                iwc_r.append(np.ones((mxn,125), 'int16')*-4444)
+                inc_r.append(np.ones((mxn,125), 'int16')*-4444)
+                ier_r.append(np.ones((mxn,125), 'int16')*-4444)
+            # ======================================================================
+            # cloud water content radar versus optical depth
+            try:
+                f_CWCo = Listador(path_CWCo+year+'/'+day, inicio=files[i][:13], final='.hdf')[0]
+
+                LWC_o = DesHDF(path_CWCo+year+'/'+day+'/'+f_CWCo, 'RVOD_liq_water_content')
+                LNC_o = DesHDF(path_CWCo+year+'/'+day+'/'+f_CWCo, 'RVOD_liq_number_conc')
+                LER_o = DesHDF(path_CWCo+year+'/'+day+'/'+f_CWCo, 'RVOD_liq_effective_radius')
+
+                IWC_o = DesHDF(path_CWCo+year+'/'+day+'/'+f_CWCo, 'RVOD_ice_water_content')
+                INC_o = DesHDF(path_CWCo+year+'/'+day+'/'+f_CWCo, 'RVOD_ice_number_conc')
+                IER_o = DesHDF(path_CWCo+year+'/'+day+'/'+f_CWCo, 'RVOD_ice_effective_radius')
+
+                # Change dtypes for generic
+                lwc_o.append(VarSplitFilled(LWC_o,Lat, Lon, Tropical,(mxn,LWC_o.shape[1]), LWC_o.dtype, NoValue=-4444))
+                lnc_o.append(VarSplitFilled(LNC_o,Lat, Lon, Tropical,(mxn,LNC_o.shape[1]), LNC_o.dtype, NoValue=-4444))
+                ler_o.append(VarSplitFilled(LER_o,Lat, Lon, Tropical,(mxn,LER_o.shape[1]), LER_o.dtype, NoValue=-4444))
+
+                iwc_o.append(VarSplitFilled(IWC_o,Lat, Lon, Tropical,(mxn,IWC_o.shape[1]), IWC_o.dtype, NoValue=-4444))
+                inc_o.append(VarSplitFilled(INC_o,Lat, Lon, Tropical,(mxn,INC_o.shape[1]), INC_o.dtype, NoValue=-4444))
+                ier_o.append(VarSplitFilled(IER_o,Lat, Lon, Tropical,(mxn,IER_o.shape[1]), IER_o.dtype, NoValue=-4444))
+            except:
+                lwc_o.append(np.ones((mxn,125), 'int16')*-4444)
+                lnc_o.append(np.ones((mxn,125), 'int16')*-4444)
+                ler_o.append(np.ones((mxn,125), 'int16')*-4444)
+
+                iwc_o.append(np.ones((mxn,125), 'int16')*-4444)
+                inc_o.append(np.ones((mxn,125), 'int16')*-4444)
+                ier_o.append(np.ones((mxn,125), 'int16')*-4444)
 
             # ======================================================================
 
@@ -231,6 +291,20 @@ for m in range(1,13):
     cph = list2array(cph)
     ppf = list2array(ppf)
     wlt = list2array(wlt)
+
+    lwc_r = list2array(lwc_r)
+    lnc_r = list2array(lnc_r)
+    ler_r = list2array(ler_r)
+    iwc_r = list2array(iwc_r)
+    inc_r = list2array(inc_r)
+    ier_r = list2array(ier_r)
+
+    lwc_o = list2array(lwc_o)
+    lnc_o = list2array(lnc_o)
+    ler_o = list2array(ler_o)
+    iwc_o = list2array(iwc_o)
+    inc_o = list2array(inc_o)
+    ier_o = list2array(ier_o)
 
 
 
@@ -286,6 +360,20 @@ for m in range(1,13):
     ncvar_PPF = nw.createVariable('PrecipitationFlag','int8',   ('ntime','nclass','ngeo'),zlib=True, complevel=9)
     ncvar_WLT = nw.createVariable('Water_layer_top',  'float32',('ntime','nclass','ngeo'),zlib=True, complevel=9)
 
+    ncvar_LWC_r = nw.createVariable('RO_liq_water_content',   'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_LNC_r = nw.createVariable('RO_liq_number_conc',     'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_LER_r = nw.createVariable('RO_liq_effective_radius','int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_IWC_r = nw.createVariable('RO_ice_water_content',   'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_INC_r = nw.createVariable('RO_ice_number_conc',     'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_IER_r = nw.createVariable('RO_ice_effective_radius','int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+
+    ncvar_LWC_o = nw.createVariable('RVOD_liq_water_content',   'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_LNC_o = nw.createVariable('RVOD_liq_number_conc',     'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_LER_o = nw.createVariable('RVOD_liq_effective_radius','int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_IWC_o = nw.createVariable('RVOD_ice_water_content',   'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_INC_o = nw.createVariable('RVOD_ice_number_conc',     'int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+    ncvar_IER_o = nw.createVariable('RVOD_ice_effective_radius','int16',('ntime','nheight','ngeo'),zlib=True, complevel=9)
+
 
     print 'netCDF variables created'
 
@@ -311,6 +399,21 @@ for m in range(1,13):
     ncvar_PPF.units = 'unitless'
     ncvar_WLT.units = 'km'
 
+    ncvar_LWC_r.units = 'mg m^{-3}'
+    ncvar_LNC_r.units = 'cm^{-3}'
+    ncvar_LER_r.units = 'um'
+    ncvar_IWC_r.units = 'mg m^{-3}'
+    ncvar_INC_r.units = 'cm^{-3}'
+    ncvar_IER_r.units = 'um'
+
+    ncvar_LWC_o.units = 'mg m^{-3}'
+    ncvar_LNC_o.units = 'cm^{-3}'
+    ncvar_LER_o.units = 'um'
+    ncvar_IWC_o.units = 'mg m^{-3}'
+    ncvar_INC_o.units = 'cm^{-3}'
+    ncvar_IER_o.units = 'um'
+
+
     # Agregar nombres largos, a prueba de bobos
     ncvar_lat .longname = 'Array of latitude values'
     ncvar_lon .longname = 'Array of longitude values'
@@ -330,6 +433,20 @@ for m in range(1,13):
     ncvar_CPH. longname = 'Cloud phase'
     ncvar_PPF. longname = 'Precipitation flag'
     ncvar_WLT. longname = 'Water layer top'
+
+    ncvar_LWC_r.longname = 'Radar-only Liquid Water Content'
+    ncvar_LNC_r.longname = 'Radar-only Liquid Number Concentration'
+    ncvar_LER_r.longname = 'Radar-only Liquid Effective Radius'
+    ncvar_IWC_r.longname = 'Radar-only Ice Water Content'
+    ncvar_INC_r.longname = 'Radar-only Ice Number Concentration'
+    ncvar_IER_r.longname = 'Radar-only Ice Effective Radius'
+
+    ncvar_LWC_o.longname = 'Radar vs optical depth Liquid Water Content'
+    ncvar_LNC_o.longname = 'Radar vs optical depth Liquid Number Concentration'
+    ncvar_LER_o.longname = 'Radar vs optical depth Liquid Effective Radius'
+    ncvar_IWC_o.longname = 'Radar vs optical depth Ice Water Content'
+    ncvar_INC_o.longname = 'Radar vs optical depth Ice Number Concentration'
+    ncvar_IER_o.longname = 'Radar vs optical depth Ice Effective Radius'
 
 
     nw.title = 'CloudSat of '+year+"-{:02}".format(m)
@@ -392,6 +509,19 @@ for m in range(1,13):
     ncvar_PPF [:,:,:] = ppf
     ncvar_WLT [:,:,:] = wlt
 
+    ncvar_LWC_r [:,:,:] = lwc_r
+    ncvar_LNC_r [:,:,:] = lnc_r
+    ncvar_LER_r [:,:,:] = ler_r
+    ncvar_IWC_r [:,:,:] = iwc_r
+    ncvar_INC_r [:,:,:] = inc_r
+    ncvar_IER_r [:,:,:] = ier_r
+
+    ncvar_LWC_o [:,:,:] = lwc_o
+    ncvar_LNC_o [:,:,:] = lnc_o
+    ncvar_LER_o [:,:,:] = ler_o
+    ncvar_IWC_o [:,:,:] = iwc_o
+    ncvar_INC_o [:,:,:] = inc_o
+    ncvar_IER_o [:,:,:] = ier_o
 
     # Si no cierra el archivo es como dejar la BD abierta... se lo tira!
     nw.close()
