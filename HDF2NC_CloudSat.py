@@ -106,15 +106,18 @@ for m in range(1,13):
         files = Listador(path_Data+year+'/'+day, final='.hdf')
         # files = [files[1]]
         for i in range(len(files)): # Always exist
-            tim.append(GranuleTime(files[i]))
             print( '******************************************')
             print(GranuleTime(files[i]).strftime('%Y-%m-%d %H:%M:%S'))
             # Georreference
             Lat = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Latitude')
             Lon = HDFread(path_Data+year+'/'+day+'/'+files[i], 'Longitude')
+            # No include non dataset values in the region
+            if VarSplitFilled(Lat, Lat, Lon, Tropical, (mxn, ), Lat.dtype, NoValue=-9999).max()==-9999:
+                continue
+
+            tim.append(GranuleTime(files[i]))
             lat.append(VarSplitFilled(Lat, Lat, Lon, Tropical, (mxn, ), Lat.dtype, NoValue=-9999))
             lon.append(VarSplitFilled(Lon, Lat, Lon, Tropical, (mxn, ), Lon.dtype, NoValue=-9999))
-
             # ======================================================================
             # CPR variables
             REP = DesHDF(path_Data+year+'/'+day+'/'+files[i], 'ReceivedEchoPowers')
