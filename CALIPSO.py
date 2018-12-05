@@ -23,6 +23,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
 import matplotlib.font_manager as fm
+from matplotlib.ticker import LogFormatterMathtext, LogLocator
+
 from mpl_toolkits.basemap import Basemap
 
 from Gadgets.Gadgets import * # Funciones propias
@@ -35,6 +37,7 @@ Path_fonts = '/home/cmcuervol/Fuentes/' # Atlas
 # Path_fuentes = '/home/ccuervo/Fuentes/' # SAL
 Path_data = '/home/cmcuervol/A-Train/CALIPSO/opendap.larc.nasa.gov/opendap/CALIPSO/LID_L2_05kmAPro-Standard-V4-20/2018/08/'
 Path_fig  = '/home/cmcuervol/A-Train/CALIPSO/Figures/'
+Path_dataVal = '/home/cmcuervol/A-Train/CALIPSO/CALIPSO_DATA/'
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 #                              Colors and fonts
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
@@ -63,6 +66,24 @@ Naranja      = (240/255., 108/255.,  34/255.)
 RojoChimba   = (240/255.,  84/255., 107/255.)
 Verdecillo   = ( 40/255., 225/255., 200/255.)
 Azulillo     = ( 55/255., 150/255., 220/255.)
+
+
+colores = [(201/255.,201/255.,201/255.),
+           (249/255.,249/255.,249/255.),
+           ( 47/255.,255/255.,255/255.),
+           (  0/255., 21/255.,105/255.),
+           (  0/255.,106/255., 67/255.),
+           (144/255.,255/255.,  0/255.),
+           (255/255.,255/255.,  0/255.),
+           (255/255.,255/255.,  0/255.),
+           (255/255.,204/255.,  0/255.),
+           (230/255.,  0/255.,  0/255.),
+           (242/255.,114/255.,195/255.),
+           (140/255., 13/255.,135/255.),
+           (112/255.,111/255.,111/255.),
+           (255/255.,255/255.,255/255.)]
+
+
 # flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 
 # Types of fonts Avenir
@@ -74,10 +95,12 @@ AvenirRoman = fm.FontProperties(fname=Path_fonts+'AvenirLTStd-Roman.ttf')
 
 
 
-Files = Listador(Path_data, final='.hdf')
+Files = Listador(Path_dataVal, final='.hdf')
+FilesVal = Listador(Path_dataVal, final='.hdf')
 
-V = HDFvars(Path_data+Files[2])
-V = ['Aerosol_Layer_Fraction',
+# V = HDFvars(Path_data+Files[-2])
+V = HDFvars(Path_dataVal+Files[1])
+V1 = ['Aerosol_Layer_Fraction',
  'Aerosol_Multiple_Scattering_Profile_1064',
  'Aerosol_Multiple_Scattering_Profile_532',
  'Atmospheric_Volume_Description',
@@ -151,28 +174,123 @@ V = ['Aerosol_Layer_Fraction',
  'Total_Backscatter_Coefficient_Uncertainty_532',
  'Tropopause_Height',
  'Tropopause_Temperature']
+V_Val= ['Amplifier_Gain_1064',
+ 'Attenuated_Backscatter_1064',
+ 'Calibration_Constant_1064',
+ 'Calibration_Constant_532',
+ 'Calibration_Constant_Uncertainty_1064',
+ 'Calibration_Constant_Uncertainty_532',
+ 'Day_Night_Flag',
+ 'Depolarization_Gain_Ratio_532',
+ 'Depolarization_Gain_Ratio_Uncertainty_532',
+ 'Earth-Sun_Distance',
+ 'Frame_Number',
+ 'IGBP_Surface_Type',
+ 'Land_Water_Mask',
+ 'Laser_Energy_1064',
+ 'Laser_Energy_532',
+ 'Latitude',
+ 'Lidar_Mode',
+ 'Lidar_Submode',
+ 'Longitude',
+ 'Molecular_Number_Density',
+ 'NSIDC_Surface_Type',
+ 'Noise_Scale_Factor_1064',
+ 'Noise_Scale_Factor_532_Parallel',
+ 'Noise_Scale_Factor_532_Perpendicular',
+ 'Number_Bins_Shift',
+ 'Off_Nadir_Angle',
+ 'Ozone_Number_Density',
+ 'Parallel_Amplifier_Gain_532',
+ 'Parallel_Background_Monitor_532',
+ 'Parallel_Column_Reflectance_532',
+ 'Parallel_Column_Reflectance_Uncertainty_532',
+ 'Parallel_RMS_Baseline_532',
+ 'Perpendicular_Amplifier_Gain_532',
+ 'Perpendicular_Attenuated_Backscatter_532',
+ 'Perpendicular_Background_Monitor_532',
+ 'Perpendicular_Column_Reflectance_532',
+ 'Perpendicular_Column_Reflectance_Uncertainty_532',
+ 'Perpendicular_RMS_Baseline_532',
+ 'Pressure',
+ 'Profile_ID',
+ 'Profile_Time',
+ 'Profile_UTC_Time',
+ 'QC_Flag',
+ 'QC_Flag_2',
+ 'RMS_Baseline_1064',
+ 'Relative_Humidity',
+ 'Scattering_Angle',
+ 'Solar_Azimuth_Angle',
+ 'Solar_Zenith_Angle',
+ 'Spacecraft_Altitude',
+ 'Spacecraft_Attitude',
+ 'Spacecraft_Attitude_Rate',
+ 'Spacecraft_Position',
+ 'Spacecraft_Velocity',
+ 'Subsatellite_Latitude',
+ 'Subsatellite_Longitude',
+ 'Subsolar_Latitude',
+ 'Subsolar_Longitude',
+ 'Surface_Altitude_Shift',
+ 'Surface_Elevation',
+ 'Surface_Wind_Speeds',
+ 'Temperature',
+ 'Total_Attenuated_Backscatter_532',
+ 'Tropopause_Height',
+ 'Tropopause_Temperature',
+ 'Viewing_Azimuth_Angle',
+ 'Viewing_Zenith_Angle']
 
+# DescribeHDFvar(Path_data+Files[-2],'Backscatter_Coefficient_1064' )
 
-# DescribeHDFvar(Path_data+Files[2],'Backscatter_Coefficient_1064' )
+# fecha = dt.datetime.strptime(Files[-2].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
+#
+# Lat = DesHDF(Path_data+Files[-2], 'Latitude')
+# Lat = Lat[:,1]
+# Lon = DesHDF(Path_data+Files[-2], 'Longitude')
+# Lon = Lon[:,1]
+# Pres = DesHDF(Path_data+Files[-2], 'Pressure')
+# Pres = np.ma.masked_where(Pres==-9999,Pres)
+# BSC_1064 = DesHDF(Path_data+Files[-2], 'Backscatter_Coefficient_1064')
+# BSC_532 = DesHDF(Path_data+Files[-2], 'Total_Backscatter_Coefficient_532')
+# # BSC_1064 = np.ma.masked_where(BSC_1064==-9999,BSC_1064)
+# # BSC_532 = np.ma.masked_where(BSC_532==-9999,BSC_532)
+# BSC_1064 = np.ma.masked_where(BSC_1064<0,BSC_1064)
+# BSC_532  = np.ma.masked_where(BSC_532<0,BSC_532)
+# Temp = DesHDF(Path_data+Files[-2], 'Temperature')
+# Temp = np.ma.masked_where(Temp==-9999,Temp)
+fecha = dt.datetime.strptime(FilesVal[1].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
 
-fecha = dt.datetime.strptime(Files[2].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
-
-Lat = DesHDF(Path_data+Files[2], 'Latitude')
-Lat = Lat[:,1]
-Lon = DesHDF(Path_data+Files[2], 'Longitude')
-Lon = Lon[:,1]
-Pres = DesHDF(Path_data+Files[2], 'Pressure')
+Lat = DesHDF(Path_dataVal+FilesVal[1], 'Latitude')
+Lon = DesHDF(Path_dataVal+FilesVal[1], 'Longitude')
+Pres = DesHDF(Path_dataVal+FilesVal[1], 'Pressure')
 Pres = np.ma.masked_where(Pres==-9999,Pres)
-BSC_1064 = DesHDF(Path_data+Files[2], 'Backscatter_Coefficient_1064')
-BSC_532 = DesHDF(Path_data+Files[2], 'Total_Backscatter_Coefficient_532')
+BSC_1064 = DesHDF(Path_dataVal+FilesVal[1], 'Attenuated_Backscatter_1064')
+BSC_532 = DesHDF(Path_dataVal+FilesVal[1], 'Total_Attenuated_Backscatter_532')
 # BSC_1064 = np.ma.masked_where(BSC_1064==-9999,BSC_1064)
 # BSC_532 = np.ma.masked_where(BSC_532==-9999,BSC_532)
-BSC_1064 = np.ma.masked_where(BSC_1064==-9999,BSC_1064)
-BSC_532 = np.ma.masked_where(BSC_532==-9999,BSC_532)
-Temp = DesHDF(Path_data+Files[2], 'Temperature')
+BSC_1064 = np.ma.masked_where(BSC_1064<0,BSC_1064)
+BSC_532  = np.ma.masked_where(BSC_532<0,BSC_532)
+Temp = DesHDF(Path_dataVal+FilesVal[1], 'Temperature')
 Temp = np.ma.masked_where(Temp==-9999,Temp)
 
 
+
+plt.rc(    'font',
+    size = 20,
+    family = fm.FontProperties(
+        fname = '{}AvenirLTStd-Book.otf'.format(Path_fonts)
+        ).get_name()
+)
+
+typColor = '#%02x%02x%02x' % (115,115,115)
+plt.rc('axes',labelcolor=typColor, edgecolor=typColor,)#facecolor=typColor)
+plt.rc('axes.spines',right=False, top=False, )#left=False, bottom=False)
+plt.rc('text',color= typColor)
+plt.rc('xtick',color=typColor)
+plt.rc('ytick',color=typColor)
+# plt.rc('figure.subplot', left=0, right=1, bottom=0, top=1)
 
 
 def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neither', \
@@ -216,8 +334,51 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
     plt.clf()
     plt.close('all')
 
-    fig = plt.figure(figsize=(10,10))
-    ax1 = fig.add_subplot(2,1,1)
+    fig = plt.figure(figsize=(13,10))
+    # ax2 = fig.add_subplot(1,1,1)
+    ax2 = fig.add_axes([0,0,1,1])
+    ax2.set_title(fecha.strftime('%Y-%m-%d %H:%M:%S'), loc='right', fontsize=10, color=gris70)
+    t,h = np.meshgrid(range(Data.shape[0]), range(Data.shape[1]))
+    h = h* 30./Data.shape[1]  # There are Data.shape[1] vertical bins, each one approximately ∆m thick
+    # t = t*5   # The CloudSat data footprint is approximately 5 km along-track.
+    #contorno de colores
+    if scale == 'linear':
+        cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap, levels=np.linspace(norm.vmin, norm.vmax, 256))
+    elif scale == 'logarithmic':
+        cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap, levels=np.logspace(np.log10(norm.vmin), np.log10(norm.vmax), 256))
+    elif scale == 'default': # whitout levels for interpolation
+        cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
+    else:
+        print ("Parameter scale not valid. This parameter only accept: 'linear', 'logarithmic', or 'default' as values")
+
+    # cs = ax2.pcolormesh(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
+    cbar_ax = fig.add_axes([1.02, 0.2, 0.015, 0.6])
+    if cmaplev == 'default':
+        cbar= fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend)
+    elif scale == 'logarithmic':
+        minorTicks = np.hstack([np.arange(1,10,1)*log for log in np.logspace(-10,1,12)])
+        minorTicks = minorTicks[(minorTicks >= norm.vmin) & (minorTicks <=norm.vmax)]
+        cbar = fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend, format = LogFormatterMathtext(10) ,ticks=LogLocator(10))
+        cbar.ax.yaxis.set_ticks(cs.norm(minorTicks), minor=True)
+        cbar.ax.tick_params(which='minor',width=1,length=4)
+        cbar.ax.tick_params(which='major',width=1,length=6)
+    else:
+        cbar= fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend, ticks=cmaplev)
+    cbar.ax.set_ylabel(labelData)
+
+    ax2.set_ylabel('Ray-path[km]')
+    labels = [str(x) for x in ax2.get_yticks()]
+    labels[0] = ''
+    ax2.set_yticklabels(labels)
+    # ax2.set_xlabel('Distance along-track [km]',fontproperties=AvenirRoman, color=gris70, fontsize=15)
+    ax2.text(1.02,-0.06,'Lat\nLon', transform=ax2.transAxes)
+    ticks = ax2.get_xticks()
+    ax2.set_xticklabels(map(lambda x: '%.2f\n%.2f' %(lats[int(x)], lons[int(x)]), ticks[:-1]))
+
+
+    plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
+    # ax1 = fig.add_subplot(2,1,1)
+    ax1 = fig.add_axes([0.65,0.7,0.3,0.25])
 
     lons = OrganizaLon(lons)+360
     m = Basemap(ax=ax1,llcrnrlat=-90, llcrnrlon=lons.min(),
@@ -229,41 +390,39 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
     # draw meridians
     meridians = np.arange(-360.,721.,60.)
     m.drawmeridians(meridians,labels=[0,0,0,1],fontsize=7)
-    ax1.set_title('CloudSat track',fontproperties=AvenirRoman, color=gris70, fontsize=15)
-    ax1.set_title(fecha.strftime('%Y-%m-%d %H:%M:%S'), loc='right', fontsize=10, color=gris70)
+    ax1.set_title('CALIPSO track',fontproperties=AvenirRoman, color=gris70, fontsize=15)
     x, y = m(lons, lats)
     m.plot(x, y,'--', color=RojoChimba,lw=2)
     # m.scatter(x,y,color=RojoChimba,alpha=0.7)
 
-    ax2 = fig.add_subplot(2,1,2)
-    t,h = np.meshgrid(range(Data.shape[0]), range(Data.shape[1]))
-    h = h* 30./399  # There are 399 vertical bins, each one approximately 75 m thick
-    t = t*5   # The CloudSat data footprint is approximately 5 km along-track.
-    #contorno de colores
-    if scale == 'linear':
-        cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap, levels=np.linspace(norm.vmin, norm.vmax, 256))
-    elif scale == 'logarithmic':
-        cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap, levels=np.logspace(np.log10(norm.vmin), np.log10(norm.vmax), 256))
-    elif scale == 'default': # whitout levels for interpolation
-        cs = cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
-    else:
-        print "Parameter scale not valid. This parameter only accept: 'linear', 'logarithmic', or 'default' as values"
-
-    # cs = ax2.pcolormesh(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
-    cbar_ax = fig.add_axes([0.85, 0.1, 0.015, 0.4])
-    if cmaplev == 'default':
-        cbar= fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend)
-    else:
-        cbar= fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend, ticks=cmaplev)
-    cbar.ax.set_ylabel(labelData,fontproperties=AvenirRoman, color=gris70,fontsize=15)
-
-    ax2.set_ylabel('Ray-path[km]',fontproperties=AvenirRoman, color=gris70, fontsize=15)
-    ax2.set_xlabel('Distance along-track [km]',fontproperties=AvenirRoman, color=gris70, fontsize=15)
-
-    plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
-    plt.savefig(Path_fig + name, transparent=True)
+    plt.savefig(Path_fig + name, transparent=True, bbox_inches='tight')
 
 coqueto=newjet()
+
+
+def VarSplit(var, lat, lon, bounds, axis=0):
+    """
+    split variable inside in a determined boundary and filled with a determined value
+    IMPUTS
+    var : variable to split
+    lat : array of latitudes
+    lon : array of longitudes
+    bounds : boundaries like {'latmin':-35,'latmax':45,'lonmin':-125,'lonmax':-4}
+    axis   : axis to split
+    RETURNS
+    Split : variable inside the bounds
+    """
+    idx = np.where(((lat>=bounds['latmin']) & (lat<=bounds['latmax'])) & ((lon>=bounds['lonmin']) & (lon<=bounds['lonmax'])))[0]
+    # cut = Salto(idx,1)
+    if axis == 0:
+        Split = var[idx]
+    else:
+        Split = var[:,idx]
+
+    return Split
+
+AMVA     = {'latmin':5.930,'latmax':6.590,'lonmin':-75.850,'lonmax':-75.070}
+
 
 # # levels_echo = np.array([1E-16, 1E-15,1E-14,1E-13,1E-12,1E-11,1E-10, 1E-9, 1E-8, 1E-7, 1E-6])
 # levels_echo = np.logspace(np.log10(1E-16), np.log10(1E-6),11)
@@ -271,40 +430,24 @@ coqueto=newjet()
 # norm_echo = colors.LogNorm(1E-16, 1E-6)
 # GranulePloter(REP, Lat, Lon, plt.cm.jet, norm_echo, levels_echo, 'max','logarithmic',\
 #               'Received echo powers',fecha, 'ReceivedEchoPowers'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png' )
-
+#
 # levels_BSC_1064 = np.arange(0,1.1,0.25)
-levels_BSC_1064 = np.logspace(np.log10(1E-10), np.log10(1E1),11)
-norm_BSC_1064   = colors.LogNorm(vmin=1E-10, vmax=10)
-GranulePloter(abs(BSC_1064), Lat, Lon, plt.cm.jet, norm_BSC_1064,'default', 'both', 'logarithmic',\
-             r'1064 nm Backscatter Coefficient [km$^{-1}$sr$^{-1}$]', fecha, name='Prueba_1064.png')
+levels_BSC_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+norm_BSC_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+GranulePloter(BSC_1064, Lat, Lon, plt.cm.jet, norm_BSC_1064,norm_BSC_1064, 'both', 'logarithmic',\
+             r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
 
 # levels_BSC_532 = np.arange(0,1.1,0.25)
-levels_BSC_532 = np.logspace(np.log10(1E-10), np.log10(1E1),11)
-norm_BSC_532   = colors.LogNorm(vmin=1E-10, vmax=10)
-GranulePloter(abs(BSC_532), Lat, Lon, plt.cm.jet, norm_BSC_532,'default', 'both', 'logarithmic',\
-             r'532 nm Total Backscatter Coefficient [km$^{-1}$sr$^{-1}$]', fecha, name='Prueba_532.png')
+levels_BSC_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+norm_BSC_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+GranulePloter(BSC_532, Lat, Lon, plt.cm.jet, norm_BSC_532,levels_BSC_532, 'both', 'logarithmic',\
+             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
 
 
 levels_Temp = np.arange(-100,101,25)
 norm_Temp   = colors.Normalize(vmin=-100, vmax=100)
 GranulePloter(Temp, Lat, Lon, coqueto, norm_Temp,levels_Temp, 'both', 'linear',\
-             r'Temperature [$^{\circ}$C]', fecha, name='Prueba_Temp.png')
-
-colores = [(201/255.,201/255.,201/255.),
-           (249/255.,249/255.,249/255.),
-           ( 47/255.,255/255.,255/255.),
-           (  0/255., 21/255.,105/255.),
-           (  0/255.,106/255., 67/255.),
-           (144/255.,255/255.,  0/255.),
-           (255/255.,255/255.,  0/255.),
-           (255/255.,255/255.,  0/255.),
-           (255/255.,204/255.,  0/255.),
-           (230/255.,  0/255.,  0/255.),
-           (242/255.,114/255.,195/255.),
-           (140/255., 13/255.,135/255.),
-           (112/255.,111/255.,111/255.),
-           (255/255.,255/255.,255/255.)]
-
+             r'Temperature [$^{\circ}$C]', fecha, name='New_Temp.png')
 
 
 
