@@ -27,7 +27,7 @@ from mpl_toolkits.basemap import Basemap
 
 from Gadgets.Gadgets import * # Funciones propias
 
-locale.setlocale(locale.LC_ALL, ('en_us','utf-8'))
+# locale.setlocale(locale.LC_ALL, ('en_us','utf-8'))
 
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 
@@ -148,7 +148,7 @@ AvenirRoman = fm.FontProperties(fname=Path_fuentes+'AvenirLTStd-Roman.ttf')
 #     DEM : Digital elevation model,
 #
 #     OUTPUTS
-#     file save in the path_fig folder
+#     file save in the Path_fig folder
 #     """
 #
 #     def OrganizaLon(longitude):
@@ -236,7 +236,7 @@ AvenirRoman = fm.FontProperties(fname=Path_fuentes+'AvenirLTStd-Roman.ttf')
 #         ax2.plot(DEM*1E-3,lw=2, color= gris70)
 #
 #     plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
-#     plt.savefig(path_fig + name, transparent=True)
+#     plt.savefig(Path_fig + name, transparent=True)
 #
 
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
@@ -244,7 +244,7 @@ AvenirRoman = fm.FontProperties(fname=Path_fuentes+'AvenirLTStd-Roman.ttf')
 
 
 def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neither', \
-                  scale='linear', labelData='Variable', fecha='15-01-1992', name='Prueba' ,DEM=None):
+                  scale='linear', labelData='Variable', fecha=dt.datetime(1992,1,15), name='Prueba' ,DEM=None):
     """
     Plot a CloudSat data "Granule" is defined as one orbit. A granule starts
     at the first profile that falls on or past the equator on the descending node.
@@ -267,7 +267,7 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
     DEM   : Digital elevation model, correspond for the "Granule"
 
     OUTPUTS
-    file save in the path_fig folder
+    file save in the Path_fig folder
     """
 
     def OrganizaLon(longitude):
@@ -333,13 +333,13 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
         ax2.plot(DEM*1E-3,lw=2, color= gris70)
 
     plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
-    plt.savefig(path_fig + name, transparent=True)
+    plt.savefig(Path_fig + name, transparent=True)
 
 # GranulePlot(REP, Lat, Lon, 'Received echo powers', 'Preuba.png')
 coqueto=newjet()
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 
-path_fig  = '/home/cmcuervol/A-Train/CloudSat/Figures/'
+Path_fig  = '/home/cmcuervol/A-Train/CloudSat/Figures/'
 # path = '/home/cmcuervol/A-Train/CloudSat/ftp1.cloudsat.cira.colostate.edu/2C-PRECIP-COLUMN.P1_R05/2006/185/'
 path_Data = '/home/cmcuervol/A-Train/CloudSat/ftp1.cloudsat.cira.colostate.edu/1B-CPR.P_R05/2006/153/'
 path_Geop = '/home/cmcuervol/A-Train/CloudSat/ftp1.cloudsat.cira.colostate.edu/2B-GEOPROF.P1_R05/2006/153/'
@@ -510,7 +510,7 @@ levels_LiqWat = np.array([0, 25,50,75,100, 150, 200, 250, 500, 750, 1000])*1E-1
 #     # for i  in range(1):
 #     # en i =1 para el día 154 del 2006
 #         # i = 1
-#         fecha = GranuleTime(files_Data[i])
+#         fecha = Path_fige(files_Data[i])
 #         print fecha
 #         if Data == True:
 #             Lat = HDFread(path_Data+year+'/'+day+'/'+files_Data[i], 'Latitude')
