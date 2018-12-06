@@ -278,7 +278,7 @@ V_Val= ['Amplifier_Gain_1064',
 
 
 plt.rc(    'font',
-    size = 40,
+    size = 24,
     family = fm.FontProperties(
         fname = '{}AvenirLTStd-Book.otf'.format(Path_fonts)
         ).get_name()
@@ -519,6 +519,49 @@ def ProfilePlotVerificador(Data, H, surface,Data2=None, H2=None,scale='log', \
     plt.savefig(Path_fig + name, transparent=True, bbox_inches='tight')
 
 
+def ProfileMean(Data, H, surface,lats, lons,hdown=18, hup=20,scale='log', \
+                           labelData='Variable', name='Prueba.png'):
+    """
+    Plot a CALIPSO single profile of data
+    IMPUTS:
+    Data : array 2D of data to plot
+    H    : Height of data [km]
+    lats : latitude array 1D
+    lons : longitude array 1D
+    scale: Type of scale ["linear", "log", "symlog", "logit"]
+    lablelData: Name to show in the data plot
+    name  : name of the outputfile
+
+    OUTPUTS
+    file save in the Path_fig folder
+    """
+    plt.cla()
+    plt.clf()
+    plt.close('all')
+
+    fig = plt.figure(figsize=(10,16))
+    ax1  = fig.add_axes([0,0,1,1])
+    idx = np.where(H>=surface)[0]
+    H   = H[idx]-H[idx][0]
+    dat = Data[:,idx]
+    hid = np.where((H>hdown)&(H<hup))[0]
+    bsc = np.mean(dat[:,hid],axis=1)
+
+    ax1.plot(bsc,lats, color=AzulChimba, alpha=0.7)
+    # media movil
+    a = pd.DataFrame(bsc, index=lats)
+    c = pd.rolling_median(a,window=10,min_periods=1,center=True)
+    ax1.plot(c.index.values,c.values.ravel(),linewidth=2,color=Azulillo)
+    ax1.set_yscale(scale)
+    ax1.set_ylabel(labelData)
+    ax1.text(1.05,-0.075,'Lat\nLon', transform=ax1.transAxes)
+    ticks = ax1.get_xticks()
+    ax1.set_xticklabels(map(lambda x: '%.2f\n%.2f' %(lats[int(x)], lons[int(x)]), ticks[:-1]))
+    ax1.set_ylim(bottom=1E-3, top=1E-1)
+    ax1.set_xlim(left=lats.min(), right=lats.max())
+    plt.savefig(Path_fig + name, transparent=True, bbox_inches='tight')
+
+
 def VarSplit(var, lat, lon, bounds, axis=0):
     """
     split variable inside in a determined boundary and filled with a determined value
@@ -658,11 +701,22 @@ Lidar = Perfiles.iloc[:,1].values
 # ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), \
 #             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
 #             name='ProfileCALIPSO'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+
 ProfilePlotVerificador(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), np.max(bsc_532[hueco,:],axis=0), H,\
             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
             name='ProfileCALIPSO_RevMax'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
 ProfilePlotVerificador(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(),np.min(bsc_532[hueco,:],axis=0), H, \
             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
             name='ProfileCALIPSO_RevMin'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+ProfileMean(bsc_532[hueco,:], H, srf[hueco].min(),lat[hueco],lon[hueco], 18,20, \
+            labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+            name='ProfileCALIPSO_Vmean'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+
+# levels_bsc_532 = np.arange(0,1.1,0.25)
+levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+GranulePloter(bsc_532[hueco,:], H, lat[hueco], lon[hueco], Melanie, norm_bsc_532,'default', 'max', 'logarithmic',\
+             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+             name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_AMVA_Vprof.png',DEM = srf[hueco])
 
 print ('Hello world')
