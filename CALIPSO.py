@@ -13,6 +13,7 @@ from pyhdf.SD  import *
 import pprint
 # from numpy import *         # hay que importar todo para que funcione pyhdf
 import numpy as np
+import pandas as pd
 import os, locale, sys, zipfile
 from netCDF4 import Dataset
 import datetime as dt
@@ -84,13 +85,16 @@ Azulillo     = ( 55/255., 150/255., 220/255.)
 #            (255/255.,255/255.,255/255.)]
 
 colores = [(  6/255., 48/255.,167/255.),
-           ( 22/255.,131/255.,151/255.),
-           ( 22/255.,131/255.,151/255.),
+           ( 22/255.,131/255.,251/255.),
+           ( 22/255.,131/255.,251/255.),
            ( 17/255.,127/255.,126/255.),
            (255/255.,253/255., 56/255.),
            (252/255., 13/255., 27/255.),
            (253/255.,129/255.,170/255.),
            ( 70/255., 70/255., 70/255.),
+           (180/255.,180/255.,180/255.),
+           (255/255.,255/255.,255/255.),
+           (255/255.,255/255.,255/255.),
            (255/255.,255/255.,255/255.)]
 
 Melanie = colors.LinearSegmentedColormap.from_list('Melanie',colores)
@@ -383,14 +387,14 @@ def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='bo
     ax2.set_xticklabels(map(lambda x: '%.2f\n%.2f' %(lats[int(x)], lons[int(x)]), ticks[:-1]))
     if DEM is not None:
         ax2.plot(DEM,lw=2, color= 'k')
-
+    ax.set_xlim(top=30)
     plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
     # ax1 = fig.add_subplot(2,1,1)
     ax1 = fig.add_axes([0.65,0.7,0.3,0.25])
 
     lons = OrganizaLon(lons)+360
-    m = Basemap(ax=ax1,llcrnrlat=lat.min(), llcrnrlon=lons.min(),
-                urcrnrlat=lat.max(), urcrnrlon=lons.max(), resolution='h')
+    m = Basemap(ax=ax1,llcrnrlat=lat.min(), llcrnrlon=lons.min()-5,
+                urcrnrlat=lat.max(), urcrnrlon=lons.max()+5, resolution='h')
 
     m.shadedrelief()
     # draw parallels.
@@ -411,6 +415,15 @@ def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='bo
 coqueto=newjet()
 
 
+def running_mean(x, N):
+    """
+    Movil mean with a window
+    IMPUTS
+    x : array
+    N : window
+    """
+    cumsum = np.cumsum(np.insert(x, 0, 0))
+    return (cumsum[N:] - cumsum[:-N]) / float(N)
 
 def ProfilePlot(Data, H, surface,scale='log', labelData='Variable', fecha=dt.datetime(1992,1,15),\
                 name='Prueba.png'):
@@ -434,7 +447,11 @@ def ProfilePlot(Data, H, surface,scale='log', labelData='Variable', fecha=dt.dat
     fig = plt.figure(figsize=(10,13))
     ax  = fig.add_axes([0,0,1,1])
     idx = np.where(H>=surface)[0]
-    ax.plot(Data[idx],H[idx]-H[idx][0], color=VerdeChimba)
+    ax.plot(Data[idx],H[idx]-H[idx][0], color=AzulChimba, alpha=0.7)
+    # media movil
+    a = pd.DataFrame(Data[idx], index=H[idx]-H[idx][0])
+    c = pd.rolling_median(a,window=10,min_periods=1,center=True)
+    ax.plot(c.values.ravel(),c.index.values,linewidth=2,color=Azulillo)
     ax.set_xscale(scale)
     ax.set_ylabel('Altitude [km]')
     ax.set_xlabel(labelData)
@@ -467,28 +484,31 @@ AMVA     = {'latmin':5.930,'latmax':6.590,'lonmin':-75.850,'lonmax':-75.070}
 Colombia = {'latmin':-5,'latmax':13,'lonmin':-82,'lonmax':-65}
 
 
+idxfile = 7
 
-fecha = dt.datetime.strptime(FilesVal[2].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
+fecha = dt.datetime.strptime(FilesVal[idxfile].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
 
-Lat = DesHDF(Path_dataVal+FilesVal[2], 'Latitude' ).ravel()
-Lon = DesHDF(Path_dataVal+FilesVal[2], 'Longitude').ravel()
-Pres = DesHDF(Path_dataVal+FilesVal[2], 'Pressure')
+print(fecha.strftime('%Y-%m-%d_%H-%M-%S'))
+
+Lat = DesHDF(Path_dataVal+FilesVal[idxfile], 'Latitude' ).ravel()
+Lon = DesHDF(Path_dataVal+FilesVal[idxfile], 'Longitude').ravel()
+Pres = DesHDF(Path_dataVal+FilesVal[idxfile], 'Pressure')
 Pres = np.ma.masked_where(Pres==-9999,Pres)
 
-BSC_1064 = DesHDF(Path_dataVal+FilesVal[2], 'Attenuated_Backscatter_1064')
-BSC_532  = DesHDF(Path_dataVal+FilesVal[2], 'Total_Attenuated_Backscatter_532')
+BSC_1064 = DesHDF(Path_dataVal+FilesVal[idxfile], 'Attenuated_Backscatter_1064')
+BSC_532  = DesHDF(Path_dataVal+FilesVal[idxfile], 'Total_Attenuated_Backscatter_532')
 # BSC_1064 = np.ma.masked_where(BSC_1064==-9999,BSC_1064)
 # BSC_532  = np.ma.masked_where(BSC_532 ==-9999,BSC_532)
-BSC_1064[BSC_1064<1E-4] = 1E-4
-BSC_532 [BSC_532 <1E-4] = 1E-4
+BSC_1064[BSC_1064<1E-4] = 1.0001E-4
+BSC_532 [BSC_532 <1E-4] = 1.0001E-4
 BSC_1064[BSC_1064>1E-1] = 1E-1
 BSC_532 [BSC_532 >1E-1] = 1E-1
 # BSC_1064 = np.ma.masked_where(BSC_1064<0,BSC_1064)
 # BSC_532  = np.ma.masked_where(BSC_532 <0,BSC_532)
 
-Temp = DesHDF(Path_dataVal+FilesVal[2], 'Temperature')
-Srf = DesHDF(Path_dataVal+FilesVal[2], 'Surface_Elevation').ravel()
-# Surf = DesHDF(Path_dataVal+FilesVal[2], 'Surface_Altitude_Shift')
+Temp = DesHDF(Path_dataVal+FilesVal[idxfile], 'Temperature')
+Srf = DesHDF(Path_dataVal+FilesVal[idxfile], 'Surface_Elevation').ravel()
+# Surf = DesHDF(Path_dataVal+FilesVal[idxfile], 'Surface_Altitude_Shift')
 Temp = np.ma.masked_where(Temp==-9999,Temp)
 
 
@@ -515,11 +535,11 @@ Temp = np.ma.masked_where(Temp==-9999,Temp)
 #                               Splited variables
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 
-bsc_1064 = VarSplit(BSC_1064, Lat, Lon, AMVA)
-bsc_532  = VarSplit(BSC_532,  Lat, Lon, AMVA)
-lat = VarSplit(Lat, Lat, Lon, AMVA)
-lon = VarSplit(Lon, Lat, Lon, AMVA)
-srf = VarSplit(Srf, Lat, Lon, AMVA)
+bsc_1064 = VarSplit(BSC_1064, Lat, Lon, Colombia)
+bsc_532  = VarSplit(BSC_532,  Lat, Lon, Colombia)
+lat = VarSplit(Lat, Lat, Lon, Colombia)
+lon = VarSplit(Lon, Lat, Lon, Colombia)
+srf = VarSplit(Srf, Lat, Lon, Colombia)
 
 # levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
 # norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
@@ -535,15 +555,17 @@ srf = VarSplit(Srf, Lat, Lon, AMVA)
 levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
 norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
 GranulePloter(bsc_1064, H, lat, lon, Melanie, norm_bsc_1064,norm_bsc_1064, 'both', 'logarithmic',\
-             r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png', DEM =srf)
+             r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png', DEM =srf)
 
 # levels_bsc_532 = np.arange(0,1.1,0.25)
 levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
 norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
-GranulePloter(bsc_532,H, lat, lon, Melanie, norm_bsc_532,levels_bsc_532, 'both', 'logarithmic',\
-             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png',DEM = srf)
+GranulePloter(bsc_532, H, lat, lon, Melanie, norm_bsc_532,levels_bsc_532, 'both', 'logarithmic',\
+             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png',DEM = srf)
 
 
-ProfilePlot(bsc_532[100,:], H, srf[100])
+hueco = np.where(srf<1.5)[0]
+
+ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]')
 
 print ('Hello world')
