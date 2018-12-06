@@ -278,7 +278,7 @@ V_Val= ['Amplifier_Gain_1064',
 
 
 plt.rc(    'font',
-    size = 28,
+    size = 40,
     family = fm.FontProperties(
         fname = '{}AvenirLTStd-Book.otf'.format(Path_fonts)
         ).get_name()
@@ -468,11 +468,54 @@ def ProfilePlot(Data, H, surface,Data2=None, H2=None,scale='log', labelData='Var
     ax1.set_xlabel(labelData)
     if Data2 is not None:
         ax2 = ax1.twiny()
+        Data2[Data2<1E-4] = np.nan
         ax2.plot(Data2,H2, color=Naranja)
         ax2.set_xlabel(r'RCS [mVkm$^{2}$]', color=Naranja)
         ax2.tick_params('y', colors=Naranja)
         ax2.set_xscale(scale)
         ax2.set_xlim(1E-4,16)
+    plt.savefig(Path_fig + name, transparent=True, bbox_inches='tight')
+
+def ProfilePlotVerificador(Data, H, surface,Data2=None, H2=None,scale='log', \
+                           labelData='Variable', fecha=dt.datetime(1992,1,15),\
+                           name='Prueba.png'):
+    """
+    Plot a CALIPSO single profile of data
+    IMPUTS:
+    Data : array 1D of data to plot
+    H    : Height of data [km]
+    Data2: array 1D of data to plot of LIDAR ground based
+    H2   : Height of data of LIDAR ground based [km]
+    scale : Type of scale ["linear", "log", "symlog", "logit"]
+    lablelData: Name to show in the data plot
+    fecha : datetime of the data
+    name  : name of the outputfile
+
+    OUTPUTS
+    file save in the Path_fig folder
+    """
+    plt.cla()
+    plt.clf()
+    plt.close('all')
+
+    fig = plt.figure(figsize=(10,16))
+    ax1  = fig.add_axes([0,0,1,1])
+    idx = np.where(H>=surface)[0]
+    ax1.plot(Data[idx],H[idx]-H[idx][0], color=AzulChimba, alpha=0.7)
+    # ax.plot(Data,H, color=AzulChimba, alpha=0.7)
+    # media movil
+    a = pd.DataFrame(Data[idx], index=H[idx]-H[idx][0])
+    # a = pd.DataFrame(Data, index=H)
+    c = pd.rolling_median(a,window=10,min_periods=1,center=True)
+    ax1.plot(c.values.ravel(),c.index.values,linewidth=2,color=Azulillo)
+    ax1.set_xscale(scale)
+    ax1.set_ylabel('Altitude [km]')
+    ax1.set_xlabel(labelData)
+    if Data2 is not None:
+        ax1.plot(Data2[idx],H2[idx]-H2[idx][0], color=Naranja,alpha=0.7)
+        a = pd.DataFrame(Data2[idx], index=H2[idx]-H2[idx][0])
+        c = pd.rolling_median(a,window=10,min_periods=1,center=True)
+        ax1.plot(c.values.ravel(),c.index.values,linewidth=2,color=Naranja)
     plt.savefig(Path_fig + name, transparent=True, bbox_inches='tight')
 
 
@@ -507,7 +550,7 @@ Colombia = {'latmin':-5,'latmax':13,'lonmin':-82,'lonmax':-65}
 # 6  : 2018-11-17
 # 7 : 2018-11-24
 
-idxfile = 3
+idxfile = 2
 
 fecha = dt.datetime.strptime(FilesVal[idxfile].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
 
@@ -604,13 +647,22 @@ srf = VarSplit(Srf, Lat, Lon, AMVA)
 
 Perfiles = pd.read_csv('/home/cmcuervol/A-Train/CALIPSO/Perfiles.csv', index_col=0)
 # hueco = np.where(srf<1.5)[0] # For 2018-11-24
-# hueco = range(91,121) # For 2018-08-17
-hueco = range(75,116) # For 2018-08-30
-# hueco = range(33,61) # For 2018-11-17
-Lidar = Perfiles.iloc[:,0].values
+hueco = range(91,121) # For 2018-08-17  2  1
+# hueco = range(75,116) # For 2018-08-30  3 0
+# hueco = range(33,61) # For 2018-11-17  6  2
+Lidar = Perfiles.iloc[:,1].values
 # #
-ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), Lidar, Perfiles.index.values,\
+# ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), Lidar, Perfiles.index.values,\
+#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+#             name='ProfileCALIPSOvsLIDAR'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+# ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), \
+#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+#             name='ProfileCALIPSO'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+ProfilePlotVerificador(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), np.max(bsc_532[hueco,:],axis=0), H,\
             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
-            name='Profile'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+            name='ProfileCALIPSO_RevMax'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+ProfilePlotVerificador(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(),np.min(bsc_532[hueco,:],axis=0), H, \
+            labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+            name='ProfileCALIPSO_RevMin'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
 
 print ('Hello world')
