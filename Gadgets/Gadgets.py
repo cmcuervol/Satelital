@@ -52,7 +52,15 @@ def Listador(directorio, inicio=None, final=None):
                     lf.append(i)
         return lf
 
-
+def running_mean(x, N):
+    """
+    Movil mean with a window
+    IMPUTS
+    x : array
+    N : window
+    """
+    cumsum = numpy.cumsum(numpy.insert(x, 0, 0))
+    return (cumsum[N:] - cumsum[:-N]) / float(N)
 
 def Diff(f,x, order=1, tiempo=None):
     """calculate the derived df/dx
