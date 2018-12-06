@@ -98,6 +98,7 @@ colores = [(  6/255., 48/255.,167/255.),
            (255/255.,255/255.,255/255.)]
 
 Melanie = colors.LinearSegmentedColormap.from_list('Melanie',colores)
+Melanie.set_under(colores[0])
 # flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 
 # Types of fonts Avenir
@@ -277,7 +278,7 @@ V_Val= ['Amplifier_Gain_1064',
 
 
 plt.rc(    'font',
-    size = 20,
+    size = 22,
     family = fm.FontProperties(
         fname = '{}AvenirLTStd-Book.otf'.format(Path_fonts)
         ).get_name()
@@ -349,16 +350,21 @@ def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='bo
     ax2 = fig.add_axes([0,0,1,1])
     ax2.set_title(fecha.strftime('%Y-%m-%d %H:%M:%S'), loc='right', fontsize=10, color=gris70)
     # t,h = np.meshgrid(range(Data.shape[0]), range(Data.shape[1]))
-    t,h = np.meshgrid(range(Data.shape[0]), H)
+    delta = (H[1:]-H[:-1])/2
+    delta = np.append(delta, delta[-1])
+    H = H-delta
+    H = np.append(H, H[-1]+delta[-1])
+    t,h = np.meshgrid(range(Data.shape[0]+1), H)
     # h = h* 30./Data.shape[1] -2  # There are Data.shape[1] vertical bins, each one approximately ∆m thick
     # t = t*5   # The CloudSat data footprint is approximately 5 km along-track.
     #contorno de colores
     if scale == 'linear':
-        cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap, levels=np.linspace(norm.vmin, norm.vmax, 256))
+        cs = ax2.pcolormesh(t, h, Data.T[::-1,:], norm=norm, cmap=cmap, levels=np.linspace(norm.vmin, norm.vmax, 256))
     elif scale == 'logarithmic':
-        cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap, levels=np.logspace(np.log10(norm.vmin), np.log10(norm.vmax), 256))
+        # cs = ax2.pcolormesh(t, h, Data.T[::-1,:], norm=norm, cmap=cmap, levels=np.logspace(np.log10(norm.vmin), np.log10(norm.vmax), 256))
+        cs = ax2.pcolormesh(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
     elif scale == 'default': # whitout levels for interpolation
-        cs = ax2.contourf(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
+        cs = ax2.pcolormesh(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
     else:
         print ("Parameter scale not valid. This parameter only accept: 'linear', 'logarithmic', or 'default' as values")
 
@@ -387,10 +393,11 @@ def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='bo
     ax2.set_xticklabels(map(lambda x: '%.2f\n%.2f' %(lats[int(x)], lons[int(x)]), ticks[:-1]))
     if DEM is not None:
         ax2.plot(DEM,lw=2, color= 'k')
-    ax.set_xlim(top=30)
-    plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
+    ax2.set_ylim(bottom=-2,top=30)
+    ax2.set_xlim(left=0,right=Data.shape[0]+1)
+    # plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
     # ax1 = fig.add_subplot(2,1,1)
-    ax1 = fig.add_axes([0.65,0.7,0.3,0.25])
+    ax1 = fig.add_axes([0.55,0.6,0.4,0.35])
 
     lons = OrganizaLon(lons)+360
     m = Basemap(ax=ax1,llcrnrlat=lat.min(), llcrnrlon=lons.min()-5,
@@ -448,8 +455,10 @@ def ProfilePlot(Data, H, surface,scale='log', labelData='Variable', fecha=dt.dat
     ax  = fig.add_axes([0,0,1,1])
     idx = np.where(H>=surface)[0]
     ax.plot(Data[idx],H[idx]-H[idx][0], color=AzulChimba, alpha=0.7)
+    # ax.plot(Data,H, color=AzulChimba, alpha=0.7)
     # media movil
     a = pd.DataFrame(Data[idx], index=H[idx]-H[idx][0])
+    # a = pd.DataFrame(Data, index=H)
     c = pd.rolling_median(a,window=10,min_periods=1,center=True)
     ax.plot(c.values.ravel(),c.index.values,linewidth=2,color=Azulillo)
     ax.set_xscale(scale)
@@ -484,7 +493,11 @@ AMVA     = {'latmin':5.930,'latmax':6.590,'lonmin':-75.850,'lonmax':-75.070}
 Colombia = {'latmin':-5,'latmax':13,'lonmin':-82,'lonmax':-65}
 
 
-idxfile = 7
+# 2  : 2018-08-17
+# 3  : 2018-08-30
+# 7 : 2018-11-24
+
+idxfile = 2
 
 fecha = dt.datetime.strptime(FilesVal[idxfile].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
 
@@ -554,18 +567,38 @@ srf = VarSplit(Srf, Lat, Lon, Colombia)
 
 levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
 norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
-GranulePloter(bsc_1064, H, lat, lon, Melanie, norm_bsc_1064,norm_bsc_1064, 'both', 'logarithmic',\
-             r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png', DEM =srf)
+GranulePloter(bsc_1064, H, lat, lon, Melanie, norm_bsc_1064,norm_bsc_1064, 'max', 'logarithmic',\
+             r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+             name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png', DEM =srf)
 
 # levels_bsc_532 = np.arange(0,1.1,0.25)
 levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
 norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
-GranulePloter(bsc_532, H, lat, lon, Melanie, norm_bsc_532,levels_bsc_532, 'both', 'logarithmic',\
-             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png',DEM = srf)
+GranulePloter(bsc_532, H, lat, lon, Melanie, norm_bsc_532,levels_bsc_532, 'max', 'logarithmic',\
+             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+             name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png',DEM = srf)
 
+# levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(bsc_1064, H, lat, lon, Melanie, norm_bsc_1064,'default', 'max', 'logarithmic',\
+#              r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+#              name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_AMVA.png', DEM =srf)
+#
+# # levels_bsc_532 = np.arange(0,1.1,0.25)
+# levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(bsc_532, H, lat, lon, Melanie, norm_bsc_532,'default', 'max', 'logarithmic',\
+#              r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+#              name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_AMVA.png',DEM = srf)
 
-hueco = np.where(srf<1.5)[0]
-
-ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]')
+#
+# hueco = np.where(srf<1.5)[0] # For 2018-11-24
+# hueco = range(91,121) # For 2018-18-17
+# hueco = range(75,116) # For 2018-18-30
+# # hueco = range(90,91) # For 2018-18-30
+#
+# ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(),\
+#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+#             name='Profile'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
 
 print ('Hello world')
