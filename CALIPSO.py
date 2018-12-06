@@ -278,7 +278,7 @@ V_Val= ['Amplifier_Gain_1064',
 
 
 plt.rc(    'font',
-    size = 22,
+    size = 28,
     family = fm.FontProperties(
         fname = '{}AvenirLTStd-Book.otf'.format(Path_fonts)
         ).get_name()
@@ -388,7 +388,7 @@ def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='bo
     labels[0] = ''
     ax2.set_yticklabels(labels)
     # ax2.set_xlabel('Distance along-track [km]',fontproperties=AvenirRoman, color=gris70, fontsize=15)
-    ax2.text(1.02,-0.06,'Lat\nLon', transform=ax2.transAxes)
+    ax2.text(1.05,-0.075,'Lat\nLon', transform=ax2.transAxes)
     ticks = ax2.get_xticks()
     ax2.set_xticklabels(map(lambda x: '%.2f\n%.2f' %(lats[int(x)], lons[int(x)]), ticks[:-1]))
     if DEM is not None:
@@ -397,7 +397,7 @@ def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='bo
     ax2.set_xlim(left=0,right=Data.shape[0]+1)
     # plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
     # ax1 = fig.add_subplot(2,1,1)
-    ax1 = fig.add_axes([0.55,0.6,0.4,0.35])
+    ax1 = fig.add_axes([0.55,0.62,0.4,0.35])
 
     lons = OrganizaLon(lons)+360
     m = Basemap(ax=ax1,llcrnrlat=lat.min(), llcrnrlon=lons.min()-5,
@@ -432,13 +432,15 @@ def running_mean(x, N):
     cumsum = np.cumsum(np.insert(x, 0, 0))
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 
-def ProfilePlot(Data, H, surface,scale='log', labelData='Variable', fecha=dt.datetime(1992,1,15),\
+def ProfilePlot(Data, H, surface,Data2=None, H2=None,scale='log', labelData='Variable', fecha=dt.datetime(1992,1,15),\
                 name='Prueba.png'):
     """
     Plot a CALIPSO single profile of data
     IMPUTS:
     Data : array 1D of data to plot
     H    : Height of data [km]
+    Data2: array 1D of data to plot of LIDAR ground based
+    H2   : Height of data of LIDAR ground based [km]
     scale : Type of scale ["linear", "log", "symlog", "logit"]
     lablelData: Name to show in the data plot
     fecha : datetime of the data
@@ -451,19 +453,26 @@ def ProfilePlot(Data, H, surface,scale='log', labelData='Variable', fecha=dt.dat
     plt.clf()
     plt.close('all')
 
-    fig = plt.figure(figsize=(10,13))
-    ax  = fig.add_axes([0,0,1,1])
+    fig = plt.figure(figsize=(10,16))
+    ax1  = fig.add_axes([0,0,1,1])
     idx = np.where(H>=surface)[0]
-    ax.plot(Data[idx],H[idx]-H[idx][0], color=AzulChimba, alpha=0.7)
+    ax1.plot(Data[idx],H[idx]-H[idx][0], color=AzulChimba, alpha=0.7)
     # ax.plot(Data,H, color=AzulChimba, alpha=0.7)
     # media movil
     a = pd.DataFrame(Data[idx], index=H[idx]-H[idx][0])
     # a = pd.DataFrame(Data, index=H)
     c = pd.rolling_median(a,window=10,min_periods=1,center=True)
-    ax.plot(c.values.ravel(),c.index.values,linewidth=2,color=Azulillo)
-    ax.set_xscale(scale)
-    ax.set_ylabel('Altitude [km]')
-    ax.set_xlabel(labelData)
+    ax1.plot(c.values.ravel(),c.index.values,linewidth=2,color=Azulillo)
+    ax1.set_xscale(scale)
+    ax1.set_ylabel('Altitude [km]')
+    ax1.set_xlabel(labelData)
+    if Data2 is not None:
+        ax2 = ax1.twiny()
+        ax2.plot(Data2,H2, color=Naranja)
+        ax2.set_xlabel(r'RCS [mVkm$^{2}$]', color=Naranja)
+        ax2.tick_params('y', colors=Naranja)
+        ax2.set_xscale(scale)
+        ax2.set_xlim(1E-4,16)
     plt.savefig(Path_fig + name, transparent=True, bbox_inches='tight')
 
 
@@ -495,9 +504,10 @@ Colombia = {'latmin':-5,'latmax':13,'lonmin':-82,'lonmax':-65}
 
 # 2  : 2018-08-17
 # 3  : 2018-08-30
+# 6  : 2018-11-17
 # 7 : 2018-11-24
 
-idxfile = 2
+idxfile = 3
 
 fecha = dt.datetime.strptime(FilesVal[idxfile].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
 
@@ -548,11 +558,11 @@ Temp = np.ma.masked_where(Temp==-9999,Temp)
 #                               Splited variables
 # =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 
-bsc_1064 = VarSplit(BSC_1064, Lat, Lon, Colombia)
-bsc_532  = VarSplit(BSC_532,  Lat, Lon, Colombia)
-lat = VarSplit(Lat, Lat, Lon, Colombia)
-lon = VarSplit(Lon, Lat, Lon, Colombia)
-srf = VarSplit(Srf, Lat, Lon, Colombia)
+bsc_1064 = VarSplit(BSC_1064, Lat, Lon, AMVA)
+bsc_532  = VarSplit(BSC_532,  Lat, Lon, AMVA)
+lat = VarSplit(Lat, Lat, Lon, AMVA)
+lon = VarSplit(Lon, Lat, Lon, AMVA)
+srf = VarSplit(Srf, Lat, Lon, AMVA)
 
 # levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
 # norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
@@ -565,18 +575,18 @@ srf = VarSplit(Srf, Lat, Lon, Colombia)
 # GranulePloter(bsc_532,H, lat, lon, plt.cm.jet, norm_bsc_532,levels_bsc_532, 'both', 'logarithmic',\
 #              r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png',DEM = srf)
 
-levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
-norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
-GranulePloter(bsc_1064, H, lat, lon, Melanie, norm_bsc_1064,norm_bsc_1064, 'max', 'logarithmic',\
-             r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
-             name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png', DEM =srf)
-
-# levels_bsc_532 = np.arange(0,1.1,0.25)
-levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
-norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
-GranulePloter(bsc_532, H, lat, lon, Melanie, norm_bsc_532,levels_bsc_532, 'max', 'logarithmic',\
-             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
-             name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png',DEM = srf)
+# levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(bsc_1064, H, lat, lon, Melanie, norm_bsc_1064,norm_bsc_1064, 'max', 'logarithmic',\
+#              r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+#              name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png', DEM =srf)
+#
+# # levels_bsc_532 = np.arange(0,1.1,0.25)
+# levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(bsc_532, H, lat, lon, Melanie, norm_bsc_532,levels_bsc_532, 'max', 'logarithmic',\
+#              r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+#              name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_Col.png',DEM = srf)
 
 # levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
 # norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
@@ -591,14 +601,16 @@ GranulePloter(bsc_532, H, lat, lon, Melanie, norm_bsc_532,levels_bsc_532, 'max',
 #              r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
 #              name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_AMVA.png',DEM = srf)
 
-#
+
+Perfiles = pd.read_csv('/home/cmcuervol/A-Train/CALIPSO/Perfiles.csv', index_col=0)
 # hueco = np.where(srf<1.5)[0] # For 2018-11-24
-# hueco = range(91,121) # For 2018-18-17
-# hueco = range(75,116) # For 2018-18-30
-# # hueco = range(90,91) # For 2018-18-30
-#
-# ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(),\
-#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
-#             name='Profile'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+# hueco = range(91,121) # For 2018-08-17
+hueco = range(75,116) # For 2018-08-30
+# hueco = range(33,61) # For 2018-11-17
+Lidar = Perfiles.iloc[:,0].values
+# #
+ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), Lidar, Perfiles.index.values,\
+            labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+            name='Profile'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
 
 print ('Hello world')
