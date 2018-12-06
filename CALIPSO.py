@@ -67,23 +67,33 @@ RojoChimba   = (240/255.,  84/255., 107/255.)
 Verdecillo   = ( 40/255., 225/255., 200/255.)
 Azulillo     = ( 55/255., 150/255., 220/255.)
 
+#
+# colores = [(201/255.,201/255.,201/255.),
+#            (249/255.,249/255.,249/255.),
+#            ( 47/255.,255/255.,255/255.),
+#            (  0/255., 21/255.,105/255.),
+#            (  0/255.,106/255., 67/255.),
+#            (144/255.,255/255.,  0/255.),
+#            (255/255.,255/255.,  0/255.),
+#            (255/255.,255/255.,  0/255.),
+#            (255/255.,204/255.,  0/255.),
+#            (230/255.,  0/255.,  0/255.),
+#            (242/255.,114/255.,195/255.),
+#            (140/255., 13/255.,135/255.),
+#            (112/255.,111/255.,111/255.),
+#            (255/255.,255/255.,255/255.)]
 
-colores = [(201/255.,201/255.,201/255.),
-           (249/255.,249/255.,249/255.),
-           ( 47/255.,255/255.,255/255.),
-           (  0/255., 21/255.,105/255.),
-           (  0/255.,106/255., 67/255.),
-           (144/255.,255/255.,  0/255.),
-           (255/255.,255/255.,  0/255.),
-           (255/255.,255/255.,  0/255.),
-           (255/255.,204/255.,  0/255.),
-           (230/255.,  0/255.,  0/255.),
-           (242/255.,114/255.,195/255.),
-           (140/255., 13/255.,135/255.),
-           (112/255.,111/255.,111/255.),
+colores = [(  6/255., 48/255.,167/255.),
+           ( 22/255.,131/255.,151/255.),
+           ( 22/255.,131/255.,151/255.),
+           ( 17/255.,127/255.,126/255.),
+           (255/255.,253/255., 56/255.),
+           (252/255., 13/255., 27/255.),
+           (253/255.,129/255.,170/255.),
+           ( 70/255., 70/255., 70/255.),
            (255/255.,255/255.,255/255.)]
 
-
+Melanie = colors.LinearSegmentedColormap.from_list('Melanie',colores)
 # flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 
 # Types of fonts Avenir
@@ -99,7 +109,7 @@ Files = Listador(Path_dataVal, final='.hdf')
 FilesVal = Listador(Path_dataVal, final='.hdf')
 
 # V = HDFvars(Path_data+Files[-2])
-V = HDFvars(Path_dataVal+Files[1])
+# V = HDFvars(Path_dataVal+Files[1])
 V1 = ['Aerosol_Layer_Fraction',
  'Aerosol_Multiple_Scattering_Profile_1064',
  'Aerosol_Multiple_Scattering_Profile_532',
@@ -260,21 +270,6 @@ V_Val= ['Amplifier_Gain_1064',
 # BSC_532  = np.ma.masked_where(BSC_532<0,BSC_532)
 # Temp = DesHDF(Path_data+Files[-2], 'Temperature')
 # Temp = np.ma.masked_where(Temp==-9999,Temp)
-fecha = dt.datetime.strptime(FilesVal[1].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
-
-Lat = DesHDF(Path_dataVal+FilesVal[1], 'Latitude')
-Lon = DesHDF(Path_dataVal+FilesVal[1], 'Longitude')
-Pres = DesHDF(Path_dataVal+FilesVal[1], 'Pressure')
-Pres = np.ma.masked_where(Pres==-9999,Pres)
-BSC_1064 = DesHDF(Path_dataVal+FilesVal[1], 'Attenuated_Backscatter_1064')
-BSC_532 = DesHDF(Path_dataVal+FilesVal[1], 'Total_Attenuated_Backscatter_532')
-# BSC_1064 = np.ma.masked_where(BSC_1064==-9999,BSC_1064)
-# BSC_532 = np.ma.masked_where(BSC_532==-9999,BSC_532)
-BSC_1064 = np.ma.masked_where(BSC_1064<0,BSC_1064)
-BSC_532  = np.ma.masked_where(BSC_532<0,BSC_532)
-Temp = DesHDF(Path_dataVal+FilesVal[1], 'Temperature')
-Temp = np.ma.masked_where(Temp==-9999,Temp)
-
 
 
 plt.rc(    'font',
@@ -292,15 +287,24 @@ plt.rc('xtick',color=typColor)
 plt.rc('ytick',color=typColor)
 # plt.rc('figure.subplot', left=0, right=1, bottom=0, top=1)
 
+H = np.ones((583,),dtype=float)
+res= [(5,300),(290,30),(200,60),(55,180),(33,300)]
+count = 0
+for i,j in res:
+    H[count:i+count]*=j
+    count+=i
+H = H.cumsum()*1E-3 -2
 
-def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neither', \
-                  scale='linear', labelData='Variable', fecha=dt.datetime(1992,1,15), name='Prueba.png'):
+def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='both', \
+                  scale='linear', labelData='Variable', fecha=dt.datetime(1992,1,15), \
+                  name='Prueba.png',DEM= None):
     """
     Plot a CALIPSO data "Granule" is defined as one orbit. A granule starts
     at the first profile that falls on or past the equator on the descending node.
 
     IMPUTS:
     Data : array 2D of data to plot
+    H    : Height of data [km]
     lats : array of latitudes
     lons : array of longitudes
     cmap : color map
@@ -321,13 +325,15 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
         """
         reacomodate the longitudes values of a satellite track for graph it easily
         """
-        n   = np.where(longitude>0)[0] # Indixes with longitudes positives
-        a   = Salto(n,1)         # When occurs the change to negative
-        idx = n[a]             # Index when is positive again
-        copi = longitude.copy()
-        copi[idx:] = copi[idx:]-360 # Change to negative te last positive portion of data
-
-        return copi
+        try:
+            n   = np.where(longitude>0)[0] # Indixes with longitudes positives
+            a   = Salto(n,1)         # When occurs the change to negative
+            idx = n[a]             # Index when is positive again
+            copi = longitude.copy()
+            copi[idx:] = copi[idx:]-360 # Change to negative te last positive portion of data
+            return copi
+        except:
+            return longitude
 
     #limpiar guevonadas
     plt.cla()
@@ -338,8 +344,9 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
     # ax2 = fig.add_subplot(1,1,1)
     ax2 = fig.add_axes([0,0,1,1])
     ax2.set_title(fecha.strftime('%Y-%m-%d %H:%M:%S'), loc='right', fontsize=10, color=gris70)
-    t,h = np.meshgrid(range(Data.shape[0]), range(Data.shape[1]))
-    h = h* 30./Data.shape[1]  # There are Data.shape[1] vertical bins, each one approximately ∆m thick
+    # t,h = np.meshgrid(range(Data.shape[0]), range(Data.shape[1]))
+    t,h = np.meshgrid(range(Data.shape[0]), H)
+    # h = h* 30./Data.shape[1] -2  # There are Data.shape[1] vertical bins, each one approximately ∆m thick
     # t = t*5   # The CloudSat data footprint is approximately 5 km along-track.
     #contorno de colores
     if scale == 'linear':
@@ -354,11 +361,11 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
     # cs = ax2.pcolormesh(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
     cbar_ax = fig.add_axes([1.02, 0.2, 0.015, 0.6])
     if cmaplev == 'default':
-        cbar= fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend)
+        cbar= plt.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend)
     elif scale == 'logarithmic':
         minorTicks = np.hstack([np.arange(1,10,1)*log for log in np.logspace(-10,1,12)])
         minorTicks = minorTicks[(minorTicks >= norm.vmin) & (minorTicks <=norm.vmax)]
-        cbar = fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend, format = LogFormatterMathtext(10) ,ticks=LogLocator(10))
+        cbar = plt.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend, format = LogFormatterMathtext(10) ,ticks=LogLocator(10))
         cbar.ax.yaxis.set_ticks(cs.norm(minorTicks), minor=True)
         cbar.ax.tick_params(which='minor',width=1,length=4)
         cbar.ax.tick_params(which='major',width=1,length=6)
@@ -366,7 +373,7 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
         cbar= fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend, ticks=cmaplev)
     cbar.ax.set_ylabel(labelData)
 
-    ax2.set_ylabel('Ray-path[km]')
+    ax2.set_ylabel('Altitude [km]')
     labels = [str(x) for x in ax2.get_yticks()]
     labels[0] = ''
     ax2.set_yticklabels(labels)
@@ -374,21 +381,25 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
     ax2.text(1.02,-0.06,'Lat\nLon', transform=ax2.transAxes)
     ticks = ax2.get_xticks()
     ax2.set_xticklabels(map(lambda x: '%.2f\n%.2f' %(lats[int(x)], lons[int(x)]), ticks[:-1]))
-
+    if DEM is not None:
+        ax2.plot(DEM,lw=2, color= 'k')
 
     plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
     # ax1 = fig.add_subplot(2,1,1)
     ax1 = fig.add_axes([0.65,0.7,0.3,0.25])
 
     lons = OrganizaLon(lons)+360
-    m = Basemap(ax=ax1,llcrnrlat=-90, llcrnrlon=lons.min(),
-                urcrnrlat=90, urcrnrlon=lons.max())
+    m = Basemap(ax=ax1,llcrnrlat=lat.min(), llcrnrlon=lons.min(),
+                urcrnrlat=lat.max(), urcrnrlon=lons.max(), resolution='h')
+
     m.shadedrelief()
     # draw parallels.
-    parallels = np.arange(-90.,91.,30.)
+    # parallels = np.arange(-90.,91.,30.)
+    parallels = np.arange(-90.,91.,5.)
     m.drawparallels(parallels,labels=[1,0,0,0],fontsize=7)
     # draw meridians
-    meridians = np.arange(-360.,721.,60.)
+    # meridians = np.arange(-360.,721.,60.)
+    meridians = np.arange(-360.,721.,5.)
     m.drawmeridians(meridians,labels=[0,0,0,1],fontsize=7)
     ax1.set_title('CALIPSO track',fontproperties=AvenirRoman, color=gris70, fontsize=15)
     x, y = m(lons, lats)
@@ -398,6 +409,36 @@ def GranulePloter(Data, lats, lons, cmap, norm, cmaplev='default', extend='neith
     plt.savefig(Path_fig + name, transparent=True, bbox_inches='tight')
 
 coqueto=newjet()
+
+
+
+def ProfilePlot(Data, H, surface,scale='log', labelData='Variable', fecha=dt.datetime(1992,1,15),\
+                name='Prueba.png'):
+    """
+    Plot a CALIPSO single profile of data
+    IMPUTS:
+    Data : array 1D of data to plot
+    H    : Height of data [km]
+    scale : Type of scale ["linear", "log", "symlog", "logit"]
+    lablelData: Name to show in the data plot
+    fecha : datetime of the data
+    name  : name of the outputfile
+
+    OUTPUTS
+    file save in the Path_fig folder
+    """
+    plt.cla()
+    plt.clf()
+    plt.close('all')
+
+    fig = plt.figure(figsize=(10,13))
+    ax  = fig.add_axes([0,0,1,1])
+    idx = np.where(H>=surface)[0]
+    ax.plot(Data[idx],H[idx]-H[idx][0], color=VerdeChimba)
+    ax.set_xscale(scale)
+    ax.set_ylabel('Altitude [km]')
+    ax.set_xlabel(labelData)
+    plt.savefig(Path_fig + name, transparent=True, bbox_inches='tight')
 
 
 def VarSplit(var, lat, lon, bounds, axis=0):
@@ -421,34 +462,88 @@ def VarSplit(var, lat, lon, bounds, axis=0):
 
     return Split
 
+Tropical = {'latmin':-30,'latmax':30,'lonmin':-107,'lonmax':-10}
 AMVA     = {'latmin':5.930,'latmax':6.590,'lonmin':-75.850,'lonmax':-75.070}
+Colombia = {'latmin':-5,'latmax':13,'lonmin':-82,'lonmax':-65}
 
 
-# # levels_echo = np.array([1E-16, 1E-15,1E-14,1E-13,1E-12,1E-11,1E-10, 1E-9, 1E-8, 1E-7, 1E-6])
-# levels_echo = np.logspace(np.log10(1E-16), np.log10(1E-6),11)
-# # cmap_echo, norm_echo = cmapeador(stdcolors,levels_echo, 'echo')
-# norm_echo = colors.LogNorm(1E-16, 1E-6)
-# GranulePloter(REP, Lat, Lon, plt.cm.jet, norm_echo, levels_echo, 'max','logarithmic',\
-#               'Received echo powers',fecha, 'ReceivedEchoPowers'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png' )
-#
+
+fecha = dt.datetime.strptime(FilesVal[2].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
+
+Lat = DesHDF(Path_dataVal+FilesVal[2], 'Latitude' ).ravel()
+Lon = DesHDF(Path_dataVal+FilesVal[2], 'Longitude').ravel()
+Pres = DesHDF(Path_dataVal+FilesVal[2], 'Pressure')
+Pres = np.ma.masked_where(Pres==-9999,Pres)
+
+BSC_1064 = DesHDF(Path_dataVal+FilesVal[2], 'Attenuated_Backscatter_1064')
+BSC_532  = DesHDF(Path_dataVal+FilesVal[2], 'Total_Attenuated_Backscatter_532')
+# BSC_1064 = np.ma.masked_where(BSC_1064==-9999,BSC_1064)
+# BSC_532  = np.ma.masked_where(BSC_532 ==-9999,BSC_532)
+BSC_1064[BSC_1064<1E-4] = 1E-4
+BSC_532 [BSC_532 <1E-4] = 1E-4
+BSC_1064[BSC_1064>1E-1] = 1E-1
+BSC_532 [BSC_532 >1E-1] = 1E-1
+# BSC_1064 = np.ma.masked_where(BSC_1064<0,BSC_1064)
+# BSC_532  = np.ma.masked_where(BSC_532 <0,BSC_532)
+
+Temp = DesHDF(Path_dataVal+FilesVal[2], 'Temperature')
+Srf = DesHDF(Path_dataVal+FilesVal[2], 'Surface_Elevation').ravel()
+# Surf = DesHDF(Path_dataVal+FilesVal[2], 'Surface_Altitude_Shift')
+Temp = np.ma.masked_where(Temp==-9999,Temp)
+
+
+
 # levels_BSC_1064 = np.arange(0,1.1,0.25)
-levels_BSC_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
-norm_BSC_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
-GranulePloter(BSC_1064, Lat, Lon, plt.cm.jet, norm_BSC_1064,norm_BSC_1064, 'both', 'logarithmic',\
-             r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+# levels_BSC_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_BSC_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(BSC_1064, Lat, Lon, plt.cm.jet, norm_BSC_1064,norm_BSC_1064, 'both', 'logarithmic',\
+#              r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+#
+# # levels_BSC_532 = np.arange(0,1.1,0.25)
+# levels_BSC_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_BSC_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(BSC_532, Lat, Lon, plt.cm.jet, norm_BSC_532,levels_BSC_532, 'both', 'logarithmic',\
+#              r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+#
+#
+# levels_Temp = np.arange(-100,101,25)
+# norm_Temp   = colors.Normalize(vmin=-100, vmax=100)
+# GranulePloter(Temp, Lat, Lon, coqueto, norm_Temp,levels_Temp, 'both', 'linear',\
+#              r'Temperature [$^{\circ}$C]', fecha, name='New_Temp.png')
 
-# levels_BSC_532 = np.arange(0,1.1,0.25)
-levels_BSC_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
-norm_BSC_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
-GranulePloter(BSC_532, Lat, Lon, plt.cm.jet, norm_BSC_532,levels_BSC_532, 'both', 'logarithmic',\
-             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+# =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+#                               Splited variables
+# =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+bsc_1064 = VarSplit(BSC_1064, Lat, Lon, AMVA)
+bsc_532  = VarSplit(BSC_532,  Lat, Lon, AMVA)
+lat = VarSplit(Lat, Lat, Lon, AMVA)
+lon = VarSplit(Lon, Lat, Lon, AMVA)
+srf = VarSplit(Srf, Lat, Lon, AMVA)
+
+# levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(bsc_1064, H, lat, lon, plt.cm.jet, norm_bsc_1064,norm_bsc_1064, 'both', 'logarithmic',\
+#              r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png', DEM =srf)
+#
+# # levels_bsc_532 = np.arange(0,1.1,0.25)
+# levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(bsc_532,H, lat, lon, plt.cm.jet, norm_bsc_532,levels_bsc_532, 'both', 'logarithmic',\
+#              r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png',DEM = srf)
+
+levels_bsc_1064 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+norm_bsc_1064   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+GranulePloter(bsc_1064, H, lat, lon, Melanie, norm_bsc_1064,norm_bsc_1064, 'both', 'logarithmic',\
+             r'1064 nm Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Attenuated_Backscatter_1064_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png', DEM =srf)
+
+# levels_bsc_532 = np.arange(0,1.1,0.25)
+levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+GranulePloter(bsc_532,H, lat, lon, Melanie, norm_bsc_532,levels_bsc_532, 'both', 'logarithmic',\
+             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png',DEM = srf)
 
 
-levels_Temp = np.arange(-100,101,25)
-norm_Temp   = colors.Normalize(vmin=-100, vmax=100)
-GranulePloter(Temp, Lat, Lon, coqueto, norm_Temp,levels_Temp, 'both', 'linear',\
-             r'Temperature [$^{\circ}$C]', fecha, name='New_Temp.png')
-
-
+ProfilePlot(bsc_532[100,:], H, srf[100])
 
 print ('Hello world')
