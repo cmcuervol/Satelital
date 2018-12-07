@@ -278,7 +278,7 @@ V_Val= ['Amplifier_Gain_1064',
 
 
 plt.rc(    'font',
-    size = 24,
+    size = 40,
     family = fm.FontProperties(
         fname = '{}AvenirLTStd-Book.otf'.format(Path_fonts)
         ).get_name()
@@ -371,16 +371,16 @@ def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='bo
     # cs = ax2.pcolormesh(t, h, Data.T[::-1,:], norm=norm, cmap=cmap)
     cbar_ax = fig.add_axes([1.02, 0.2, 0.015, 0.6])
     if cmaplev == 'default':
-        cbar= plt.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend)
+        cbar= plt.colorbar(cs, cax=cbar_ax, norm=norm,orientation='vertical', extend=extend)
     elif scale == 'logarithmic':
         minorTicks = np.hstack([np.arange(1,10,1)*log for log in np.logspace(-10,1,12)])
         minorTicks = minorTicks[(minorTicks >= norm.vmin) & (minorTicks <=norm.vmax)]
-        cbar = plt.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend, format = LogFormatterMathtext(10) ,ticks=LogLocator(10))
+        cbar = plt.colorbar(cs, cax=cbar_ax, norm =norm, orientation='vertical', extend=extend, format = LogFormatterMathtext(10) ,ticks=LogLocator(10))
         cbar.ax.yaxis.set_ticks(cs.norm(minorTicks), minor=True)
         cbar.ax.tick_params(which='minor',width=1,length=4)
         cbar.ax.tick_params(which='major',width=1,length=6)
     else:
-        cbar= fig.colorbar(cs, cax=cbar_ax, orientation='vertical', extend=extend, ticks=cmaplev)
+        cbar= plt.colorbar(cs, cax=cbar_ax, norm=norm, orientation='vertical', extend=extend, ticks=cmaplev)
     cbar.ax.set_ylabel(labelData)
 
     ax2.set_ylabel('Altitude [km]')
@@ -393,7 +393,7 @@ def GranulePloter(Data, H, lats, lons, cmap, norm, cmaplev='default', extend='bo
     ax2.set_xticklabels(map(lambda x: '%.2f\n%.2f' %(lats[int(x)], lons[int(x)]), ticks[:-1]))
     if DEM is not None:
         ax2.plot(DEM,lw=2, color= 'k')
-    ax2.set_ylim(bottom=-2,top=30)
+    ax2.set_ylim(bottom=17,top=23)
     ax2.set_xlim(left=0,right=Data.shape[0]+1)
     # plt.subplots_adjust(left=0.125, bottom=0.1, right=0.8, top=0.95, wspace=0.2, hspace=0.1)
     # ax1 = fig.add_subplot(2,1,1)
@@ -462,7 +462,7 @@ def ProfilePlot(Data, H, surface,Data2=None, H2=None,scale='log', labelData='Var
     a = pd.DataFrame(Data[idx], index=H[idx]-H[idx][0])
     # a = pd.DataFrame(Data, index=H)
     c = pd.rolling_median(a,window=10,min_periods=1,center=True)
-    ax1.plot(c.values.ravel(),c.index.values,linewidth=2,color=Azulillo)
+    ax1.plot(c.values.ravel(),c.index.values,linewidth=5,color=Azulillo)
     ax1.set_xscale(scale)
     ax1.set_ylabel('Altitude [km]')
     ax1.set_xlabel(labelData)
@@ -593,7 +593,7 @@ Colombia = {'latmin':-5,'latmax':13,'lonmin':-82,'lonmax':-65}
 # 6  : 2018-11-17
 # 7 : 2018-11-24
 
-idxfile = 2
+idxfile = 6
 
 fecha = dt.datetime.strptime(FilesVal[idxfile].split('.')[1][:-1], '%Y-%m-%dT%H-%M-%SZ')
 
@@ -610,8 +610,10 @@ BSC_532  = DesHDF(Path_dataVal+FilesVal[idxfile], 'Total_Attenuated_Backscatter_
 # BSC_532  = np.ma.masked_where(BSC_532 ==-9999,BSC_532)
 BSC_1064[BSC_1064<1E-4] = 1.0001E-4
 BSC_532 [BSC_532 <1E-4] = 1.0001E-4
-BSC_1064[BSC_1064>1E-1] = 1E-1
-BSC_532 [BSC_532 >1E-1] = 1E-1
+# BSC_1064[BSC_1064>1E-1] = 1E-1
+# BSC_532 [BSC_532 >1E-1] = 1E-1
+BSC_1064 = np.ma.masked_where(BSC_1064>1E-1,BSC_1064)
+BSC_532  = np.ma.masked_where(BSC_532 >1E-1,BSC_532)
 # BSC_1064 = np.ma.masked_where(BSC_1064<0,BSC_1064)
 # BSC_532  = np.ma.masked_where(BSC_532 <0,BSC_532)
 
@@ -690,33 +692,39 @@ srf = VarSplit(Srf, Lat, Lon, AMVA)
 
 Perfiles = pd.read_csv('/home/cmcuervol/A-Train/CALIPSO/Perfiles.csv', index_col=0)
 # hueco = np.where(srf<1.5)[0] # For 2018-11-24
-hueco = range(91,121) # For 2018-08-17  2  1
+# hueco = range(91,121) # For 2018-08-17  2  1
 # hueco = range(75,116) # For 2018-08-30  3 0
-# hueco = range(33,61) # For 2018-11-17  6  2
-Lidar = Perfiles.iloc[:,1].values
+hueco = range(33,61) # For 2018-11-17  6  2
+Lidar = Perfiles.iloc[:,2].values
 # #
-# ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), Lidar, Perfiles.index.values,\
-#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
-#             name='ProfileCALIPSOvsLIDAR'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
-# ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), \
-#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
-#             name='ProfileCALIPSO'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), Lidar, Perfiles.index.values,\
+            labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+            name='ProfileCALIPSOvsLIDAR'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+ProfilePlot(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), \
+            labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+            name='ProfileCALIPSO_CD'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
 
-ProfilePlotVerificador(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), np.max(bsc_532[hueco,:],axis=0), H,\
-            labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
-            name='ProfileCALIPSO_RevMax'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
-ProfilePlotVerificador(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(),np.min(bsc_532[hueco,:],axis=0), H, \
-            labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
-            name='ProfileCALIPSO_RevMin'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
-ProfileMean(bsc_532[hueco,:], H, srf[hueco].min(),lat[hueco],lon[hueco], 18,20, \
-            labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
-            name='ProfileCALIPSO_Vmean'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+# ProfilePlotVerificador(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(), np.max(bsc_532[hueco,:],axis=0), H,\
+#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+#             name='ProfileCALIPSO_RevMax'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+# ProfilePlotVerificador(np.mean(bsc_532[hueco,:],axis=0), H, srf[hueco].min(),np.min(bsc_532[hueco,:],axis=0), H, \
+#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+#             name='ProfileCALIPSO_RevMin'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+# ProfileMean(bsc_532[hueco,:], H, srf[hueco].min(),lat[hueco],lon[hueco], 18,20, \
+#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+#             name='ProfileCALIPSO_Vmean'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
+# ProfileMean(bsc_532, H, srf.min(),lat,lon, 18,20, \
+#             labelData=r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]',\
+#             name='ProfileCALIPSO_Vmean'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'.png')
 
 # levels_bsc_532 = np.arange(0,1.1,0.25)
-levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
-norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
-GranulePloter(bsc_532[hueco,:], H, lat[hueco], lon[hueco], Melanie, norm_bsc_532,'default', 'max', 'logarithmic',\
-             r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
-             name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_AMVA_Vprof.png',DEM = srf[hueco])
+# levels_bsc_532 = np.logspace(np.log10(1E-4), np.log10(1E-1),11)
+# norm_bsc_532   = colors.LogNorm(vmin=1E-4, vmax=1E-1)
+# GranulePloter(bsc_532[hueco,:], H, lat[hueco], lon[hueco], Melanie, norm_bsc_532,'default', 'max', 'logarithmic',\
+#              r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+#              name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_AMVA_Vprof.png',DEM = srf[hueco])
+# GranulePloter(bsc_532*1E1, H, lat, lon, Melanie, norm_bsc_532,'default', 'max', 'logarithmic',\
+#              r'532 nm Total Attenuated Backscatter [km$^{-1}$sr$^{-1}$]', fecha, \
+#              name='Total_Attenuated_Backscatter_532_'+fecha.strftime('%Y-%m-%d_%H-%M-%S')+'_AMVA_Vprof.png',DEM = srf[hueco])
 
 print ('Hello world')
